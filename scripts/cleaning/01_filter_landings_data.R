@@ -10,7 +10,12 @@ library(here)
 library(tidyverse)
 
 landings <- readRDS(
-  file = file.path(data_path, "mex_fisheries", "mex_landings", "clean", "mex_annual_landings_by_vessel.rds")
+  file = file.path("/Users/juancarlosvillasenorderbez/GitHub/",
+                   "data_mex_fisheries",
+                   "data",
+                   "mex_landings",
+                   "clean",
+                   "mex_annual_landings_by_eu.rds")
 )
 
 

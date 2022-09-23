@@ -1,7 +1,9 @@
 source("renv/activate.R")
 
-data_path <-
-  "/Users/juancarlosvillasenorderbez/GitHub/data/data_sets"
+mex_data_path <-
+  "/Users/juancarlosvillasenorderbez/GitHub/data_mex_fisheries/data"
+remote_data_path <-
+  "/Users/juancarlosvillasenorderbez/GitHub/data_remote/data"
 
 coop_eurnpa <- data.frame(
   eu_rnpa = c(
