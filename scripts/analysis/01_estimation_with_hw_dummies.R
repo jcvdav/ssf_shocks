@@ -15,45 +15,73 @@ filtered <- readRDS(here::here("data", "processed", "filtered_landings.rds"))
 
 # Process
 processed <- filtered %>% 
+  filter(year_cut >= 2003) %>% 
   group_by(coop, main_species_group) %>% 
   mutate(landed_weight = (landed_weight - mean(landed_weight)) / sd(landed_weight),
-         n = n()) %>% 
-  filter(n > 5) %>% 
+         n = n()) %>%
+  filter(n > 5) %>%
   ungroup() %>% 
-  mutate(hw = case_when(year_cut <= 2013 ~ "0",
-                        year_cut >= 2017 ~ "2",
-                        T ~ "1"))
+  mutate(hw = case_when(year_cut <= 2013 ~ "Before HW",
+                        year_cut >= 2017 ~ "After HW",
+                        T ~ "During HW"),
+         hw = fct_reorder(hw, year_cut)) %>% 
+  filter(main_species_group == "LANGOSTA")
 
 
-data <- processed #%>% 
-  # left_join(sst, by = "coop")
+data <- processed %>% 
+  left_join(sst_ts, by = c("year_cut" = "year", "coop")) %>% 
+  filter(!coop == "Ensenada")
 
 ggplot(data = data) +
-  geom_rect(xmin= 2014, xmax = 2017, ymin = -5, ymax = 5, color = "black", fill = "gray80") +
-  # geom_smooth(aes(x = year_cut, y = landed_weight, group = hw), method = "lm", color = "black") +
+  geom_rect(xmin= 2013.5, xmax = 2017.5, ymin = -100, ymax = 500, fill = "gray") +
   geom_line(aes(x = year_cut,
-                y = landed_weight / 1e3, color = coop)) +
-  # geom_line(aes(x = year_cut, y = mean, group = hw)) +
-  facet_wrap(~main_species_group, ncol = 2, scales = "free_y") +
+                y = landed_weight, color = coop)) +
   theme_bw() +
   labs(x = "Year",
-       y = "Normalized landings (z-score)",
+       y = "Standardized landed weight",
        color = "Cooperative") +
-  theme(legend.position = c(1, 0),
-        legend.justification = c(1, 0)) +
+  theme(legend.position = "bottom") +
   guides(color = guide_legend(ncol = 2)) +
   scale_color_brewer(palette = "Set1")
 
 
 library(fixest)
 library(modelsummary)
-m1 <- feols(log(landed_weight) ~ hw + year_cut, data = processed, split = ~main_species_group)
-m2 <- feols(log(landed_weight) ~ hw + year_cut| coop, data = processed, split = ~main_species_group)
+
+m1 <- feols(landed_weight ~ mean_sst + year_cut, data = data, split = ~coop)
+m2 <- feols(landed_weight ~ mean_sst, data = data)
+m3 <- feols(landed_weight ~ mean_sst + year_cut, data = data)
+m4 <- feols(landed_weight ~ mean_sst + year_cut | coop, data = data)
+
 #(exp(𝛽1)−1)⋅100
 modelsummary(m1, stars = T)
-modelsummary(m2, stars = T, coef_map = c("hw1" = "During HW",
-                                         "hw2" = "After HW",
-                                         "year_cut" = "Trend"))
+modelsummary(list(m2, m3, m4), stars = T)
+
+res <- map_dfr(m1, tidy, .id = "coop") %>% 
+  filter(term == "mean_sst") %>% 
+  mutate(string = paste(
+    "Slope = ",
+    formatC(estimate, digits = 3),
+    "\np = ",
+    formatC(p.value, digits = 2)
+  ))
+
+ggplot(data, aes(x = mean_sst, y = landed_weight)) + 
+  geom_smooth(method = "lm", se = T, color = "black", linetype = "dashed") +
+  geom_point(aes(fill = hw), shape = 21, color = "black", size = 2) +
+  geom_text(data = res, x = 21.5, y = 2, aes(label = string), size = 3) +
+  facet_wrap(~coop) +
+  labs(x = "Mean annual SST (°C)",
+       y = "Standardized landed weight",
+       fill = "Period") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_bw() +
+  theme(legend.position = c(0.9, 0),
+        legend.justification = c(1, 0),
+        strip.background = element_blank())
+
+
+
 
 # fedecoop <- sf::st_read(dsn = file.path(data_path, "mex_fisheries", "fedecoop", "fedecoop_polygons.gpkg"))
 
