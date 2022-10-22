@@ -170,6 +170,27 @@ background-repeat: no-repeat;
 background-size: contain;
 class:inverse,center,middle
 # The end
+
+---
+# Extra
+
+|           | log(Landings) | log(Revenues) | log(Landings)  | log(Revenues)  |
+|:----------|:-------------:|:-------------:|:--------------:|:--------------:|
+|During HW  |    -0.311*    |   -0.416**    |     0.733*     |    0.660**     |
+|           |    (0.114)    |    (0.124)    |    (0.083)     |    (0.082)     |
+|Aeftr HW   |    -0.031     |    -0.238     |     0.970      |     0.788      |
+|           |    (0.145)    |    (0.188)    |    (0.140)     |    (0.148)     |
+|Time trend |    0.027+     |   0.144***    |     1.027+     |    1.155***    |
+|           |    (0.013)    |    (0.026)    |    (0.013)     |    (0.030)     |
+|Num.Obs.   |      225      |      225      |      225       |      225       |
+|RMSE       |     0.50      |     0.62      |      0.50      |      0.62      |
+|Std.Errors |   by: coop    |   by: coop    |    by: coop    |    by: coop    |
+|FE: coop   |       X       |       X       |       X        |       X        |
+
+__Note:__
+^^ + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001
+
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
