@@ -6,6 +6,7 @@ institute: "Micheli Lab, HMS"
 date: "Oct 22, 2022"
 output:
   xaringan::moon_reader:
+    self_contained: true
     lib_dir: libs
     nature:
       ratio: '16:9'
