@@ -105,7 +105,7 @@ _Panulirus interruptus_
 
 
 ---
-# SST, landings, and revenues across TURFS
+# SST, landings, and revenues across TURFs
 
 .pull-left[<img src="img/sst_ts.png" width=400>]
 
@@ -125,7 +125,7 @@ _Panulirus interruptus_
 
 
 ---
-# Estiamted impacts
+# Estimated impacts
 
 .pull-left[
 ##Log-linear fixed-effects panel regressions
