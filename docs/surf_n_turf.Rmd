@@ -90,7 +90,7 @@ class: inverse,center,middle
 # The focus
 
 .pull-left[
-### 12 TURFs in Baja
+### 14 TURFs in Baja
 <img src="img/focus_study_area.png" width=350>
 ]
 
