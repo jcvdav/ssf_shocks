@@ -1,0 +1,167 @@
+---
+title: "Bio-economic Impacts of Environmental Shocks in Small-scale Fisheries"
+subtitle: "Surf 'n' Turf"
+author: "Villaseñor-Derbez, J.C."
+institute: "Micheli Lab, HMS"
+date: "Oct 22, 2022"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      ratio: '16:9'
+      slideNumberFormat: "%none%"
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+    css: xaringan-themer.css
+---
+
+```{css slide-number-off, echo = F}
+.remark-slide-number {
+  display: none;
+}
+```
+
+```{r, echo = F, include = F, warnings = F}
+knitr::opts_chunk$set(echo = F,
+                      warnings = F,
+                      message = F)
+library(xaringanthemer)
+style_mono_accent(
+  base_color = "#1c5253",
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Roboto", "400", "300i", "300b"),
+  code_font_google   = google_font("Fira Mono"),
+  header_h1_font_size = "2.2rem",
+  header_h2_font_size = "2rem",
+  text_font_size = "1.1rem",
+  link_color = "#808080",
+  header_background_auto = T,
+  footnote_font_size = "0.75rem"
+)
+```
+
+# Warming up
+
+.pull-left[
+- Warm water during 2014 - 2017
+
+
+- Well-documented impacts on ecological communities
+
+
+
+]
+
+.pull-right[
+<img src="/results/img/sst_anom.png" width=500>
+]
+
+---
+# Warming up
+
+.pull-left[
+- Warm water during 2014 - 2017
+
+
+- Well-documented impacts on ecological communities
+
+
+- Largest anomalies around Baja
+
+
+]
+
+.pull-right[
+<img src="/results/img/sst_anom_turfs.png" width=500>
+]
+
+---
+class: inverse,center,middle
+
+# What were the economic impacts?
+
+---
+# The focus
+
+.pull-left[
+### 12 TURFs in Baja
+<img src="/results/img/focus_study_area.png" width=350>
+]
+
+--
+
+.pull-right[
+### Spiny lobster fishery
+<img src="/results/img/miguel_lobster.jpeg" width=250>
+
+_Panulirus interruptus_
+]
+
+
+---
+# SST, landings, and revenues across TURFS
+
+.pull-left[<img src="/results/img/sst_ts.png" width=400>]
+
+
+---
+# SST, landings, and revenues across TURFS
+
+.pull-left[
+<img src="/results/img/sst_ts.png" width=400>
+
+<img src="/results/img/fishery_ts.png" width=400>
+]
+
+--
+
+.pull-right[<img src="/results/img/panel_figure.png" width=800>]
+
+
+---
+# Estiamted impacts
+
+.pull-left[
+##Log-linear fixed-effects panel regressions
+
+<img src="/results/img/effect_size.png" width=500>
+
+]
+
+.pull-right[
+## During
+
+- 26% decrease in landings
+
+- 34% decrease in revenues
+]
+
+---
+# Estiamted impacts
+
+.pull-left[
+##Log-linear fixed-effects panel regressions
+
+<img src="/results/img/effect_size.png" width=500>
+
+]
+
+.pull-right[
+## During
+
+- 26% decrease in landings
+
+- 34% decrease in revenues
+
+
+## After
+
+- 3% decrease in landings
+
+- 21% decrease in revenues
+
+]
+
+---
+# The end
