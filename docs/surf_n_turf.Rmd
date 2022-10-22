@@ -169,4 +169,9 @@ _Panulirus interruptus_
 ]
 
 ---
+background-image: url(img/ero_lobster.jpg)
+background-position: center;
+background-repeat: no-repeat;
+background-size: contain;
+class:inverse,center,middle
 # The end
