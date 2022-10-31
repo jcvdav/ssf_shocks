@@ -16,7 +16,21 @@ coop_eurnpa <- data.frame(
     "0203000021",
     "0310000013",
     "0203000278",
-    "0203000302"
+    "0203000302",
+    "0203008305",
+    "0203008990",
+    "0203008198",
+    "0203126602",
+    "0203009261",
+    "0203010715",
+    "0203005673",
+    "0203002829",
+    "0203004726",
+    "0203126974",
+    "0203014063",
+    "0203006168",
+    "0203000351",
+    "0203007901"
   ),
   coop = c(
     "Buzos y Pescadores",
@@ -28,6 +42,20 @@ coop_eurnpa <- data.frame(
     "Progreso",
     "Punta Abreojos",
     "Isla Cedros",
-    "Ensenada"
+    "Ensenada",
+    "Litoral de Baja California",
+    "Manchuria",
+    "Morro de Rosarito",
+    "Jauregui Hernandez",
+    "Pescadores Ribereños",
+    "Punta Canoas",
+    "Buzos de la Costa Occidental",
+    "Abuloneros y Langosteros",
+    "Regasa",
+    "Isla San Geronimo",
+    "Roca San Martin",
+    "Patrimonio en el mar",
+    "Rafael Ortega Cruz",
+    "Pescadores Ribereños de BC"
   )
 )
