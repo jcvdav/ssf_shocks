@@ -28,22 +28,29 @@ landings <- readRDS(
   )
 )
 
+# Define species I want --------------------------------------------------------
+spp <- c(
+  "LANGOSTA"#,
+  #,"ABULON",
+  # "PEPINO DE MAR",
+  # "ERIZO"
+)
+
 ## PROCESSING ##################################################################
 
 # X ----------------------------------------------------------------------------
 filtered <- landings %>%
-  ungroup() %>%
   inner_join(coop_eurnpa, by = "eu_rnpa") %>%
-  filter(main_species_group %in% c("ABULON", "LANGOSTA", "PEPINO DE MAR")) %>%
-  group_by(year_cut, main_species_group, coop) %>%
-  summarize(
-    landed_weight = sum(landed_weight, na.rm = T),
-    value = sum(value, na.rm = T)
-  ) %>%
-  mutate(year_cut = as.numeric(year_cut))
+  filter(main_species_group %in% spp)
+  
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
 saveRDS(object = filtered,
         file = here("data", "processed", "filtered_landings.rds"))
+
+
+TO DO
+- Filter landings data: why am I grouping and summarizing?
+- Build fishery estimation panel
