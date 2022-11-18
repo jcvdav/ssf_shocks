@@ -39,11 +39,13 @@ cobi_clean <- cobi %>%
          abundance = ABUNDANCIA) %>% 
   filter(species == "Panulirus interruptus",
          community %in% c("Isla Natividad", "El Rosario")) %>% 
-  mutate(density = abundance / 60)
+  mutate(density = abundance / 60,
+         coop_name = case_when(community == "Isla Natividad" ~ "Buzos y Pescadores",
+                               community == "El Rosario" ~ "Ensenada"))
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
 
 saveRDS(object = cobi_clean,
-        file = here("data", "processed", "reserve_lobster_density_site_year.Rds"))
+        file = here("data", "processed", "annual_ecological_panel.rds"))
