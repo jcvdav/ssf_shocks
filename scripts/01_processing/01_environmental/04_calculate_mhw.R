@@ -44,7 +44,7 @@ daily_sst_ts <-
 
 # Get HWs ----------------------------------------------------------------------
 mhw <- daily_sst_ts %>%
-  select(coop_name, t, temp) %>%
+  select(coop_name, eu_rnpa, t, temp) %>%
   nest(data = c(t, temp)) %>%
   mutate(
     ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2013-12-31")),
@@ -55,6 +55,5 @@ mhw <- daily_sst_ts %>%
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
-
 saveRDS(object = mhw,
         file = here("data", "processed", "mhw_by_turf.rds"))

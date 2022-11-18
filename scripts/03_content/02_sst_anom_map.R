@@ -20,17 +20,21 @@ library(sf)
 library(tidyverse)
 
 # Load data --------------------------------------------------------------------
-sst_stack <- list.files(
+sst_files <- list.files(
   path = here::here("../data_remotes/data/sst/processed_annual"),
   pattern = "tif",
-  full.names = T)[c(8, 13)] %>%
-  stack()
+  full.names = T)
+
+sst_hist_stack <- stack(sst_files[1:11]) %>% 
+  calc(mean)
+
+sst_2015 <- raster(sst_files[13])
 
 coast <-
   ne_countries(country = c("Mexico", "United States of America"),
                returnclas = "sf", scale = "medium") %>% 
   st_transform(crs = "EPSG:4326") %>% 
-  st_crop(sst_stack)
+  st_crop(sst_hist_stack)
 
 turfs <-
   sf::st_read(dsn = file.path(
@@ -46,7 +50,7 @@ turfs <-
 
 # X ----------------------------------------------------------------------------
 
-dif <- (sst_stack[[2]] - sst_stack[[1]]) %>% 
+dif <- (sst_2015 - sst_hist_stack) %>% 
   raster::aggregate(fact = 10) %>% 
   as.data.frame(xy = T) %>% 
   drop_na()
@@ -64,7 +68,7 @@ sst_anom <- ggplot() +
        y = "",
        fill = "SST anomaly\n(°C)",
        title = "Difference in SST",
-       subtitle = bquote(SST[2015]-SST[2010])) +
+       subtitle = bquote(SST[2015]-SST[2010-2013])) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal() +
