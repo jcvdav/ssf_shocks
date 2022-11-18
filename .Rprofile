@@ -32,7 +32,7 @@ coop_eurnpa <- data.frame(
     "0203000351",
     "0203007901"
   ),
-  coop = c(
+  coop_name = c(
     "Buzos y Pescadores",
     "Bahia de Tortugas",
     "California de San Ignacio",
@@ -59,3 +59,19 @@ coop_eurnpa <- data.frame(
     "Pescadores Ribereños de BC"
   )
 )
+
+periods <- dplyr::tibble(year = 1980:2022,
+                         period = dplyr::case_when(year <= 2013 ~ "0",
+                                            dplyr::between(year, 2014, 2017) ~ "1",
+                                            year > 2017 ~ "2"),
+                         period_long = dplyr::case_when(period == "0" ~ "Before MHW",
+                                                 period == "1" ~ "During MHW",
+                                                 period == "2" ~ "After MHW")) |> 
+  dplyr::mutate(period_long = forcats::fct_reorder(period_long, year))
+
+
+period_palette <- c("steelblue", "#E41A1C", "darkorange1", "cadetblue")
+
+ihs <- function(x){
+  log(x + sqrt((x ^ 2) + 1))
+}
