@@ -37,7 +37,9 @@ cobi_clean <- cobi %>%
          genus = GENERO,
          species = ESPECIE,
          abundance = ABUNDANCIA) %>% 
-  filter(species == "Panulirus interruptus",
+  filter(species %in% c("Panulirus interruptus",
+                        "Parastichopus parvimensis",
+                        "Mesocentrotus franciscanus"),
          community %in% c("Isla Natividad", "El Rosario")) %>% 
   mutate(density = abundance / 60,
          coop_name = case_when(community == "Isla Natividad" ~ "Buzos y Pescadores",

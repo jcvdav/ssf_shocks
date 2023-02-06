@@ -23,8 +23,8 @@ OISST_sub_dl <- function(time_df) {
     url = "https://coastwatch.pfeg.noaa.gov/erddap/",
     time = c(time_df$start, time_df$end),
     zlev = c(0, 0),
-    latitude = c(26, 33),
-    longitude = c(-119,-113),
+    latitude = c(23, 32.75),
+    longitude = c(-119,-110),
     fields = "sst"
   )$data %>%
     mutate(time = as.Date(stringr::str_remove(time, "T00:00:00Z"))) %>%

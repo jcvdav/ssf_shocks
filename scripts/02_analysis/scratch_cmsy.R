@@ -345,7 +345,7 @@ Temp_t <- list(
 re_params <- list(ln_B0 = rep(log(1.5), nstocks),
                   ln_r = rep(log(0.4), nstocks),
                   BetaT = rep(0.0, nstocks),
-                  ln_sigmaP = rep(-2.5, nstocks))#, # 0 before, -2.5 based on model fits
+                  ln_sigmaP = rep(-2.5, nstocks), # 0 before, -2.5 based on model fits
                   mu_T = 0.0,
                   ln_sd_T = -1.25) # -3 before, -1.25 based on model fits
 

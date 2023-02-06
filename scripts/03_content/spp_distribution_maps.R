@@ -16,7 +16,7 @@
 library(here)
 library(raster)
 library(rnaturalearth)
-library(sf))
+library(sf)
 library(tidyverse)
 
 # Load data --------------------------------------------------------------------

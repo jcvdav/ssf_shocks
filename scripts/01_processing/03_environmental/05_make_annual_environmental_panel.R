@@ -25,10 +25,10 @@ mhw_by_turf <- readRDS(here("data", "processed", "mhw_by_turf.rds"))
 # X ----------------------------------------------------------------------------
 annual_sst_panel <-
   mhw_by_turf %>%
-  select(coop_name, eu_rnpa, data) %>%
+  select(eu_name, eu_rnpa, data) %>%
   unnest(data) %>%
   mutate(year = year(t)) %>%
-  group_by(coop_name, eu_rnpa, year) %>%
+  group_by(eu_name, eu_rnpa, year) %>%
   summarize(
     temp_mean = mean(temp),
     temp_sd = sd(temp),
@@ -36,7 +36,7 @@ annual_sst_panel <-
     temp_min = min(temp)
   ) %>%
   ungroup() %>%
-  group_by(coop_name) %>% 
+  group_by(eu_name) %>% 
   mutate(temp_mean_lag = lag(temp_mean),
          temp_long_term = mean(temp_mean)) %>% 
   ungroup()
@@ -44,9 +44,9 @@ annual_sst_panel <-
 # X ----------------------------------------------------------------------------
 annual_mhw_panel <-
   mhw_by_turf %>%
-  select(coop_name, eu_rnpa, summary) %>%
+  select(eu_name, eu_rnpa, summary) %>%
   unnest(summary) %>% 
-  group_by(coop_name) %>% 
+  group_by(eu_name) %>% 
   mutate(mhw_events_lag = lag(mhw_events),
          mhw_days_lag = lag(mhw_days),
          mhw_int_cumulative_lag = lag(mhw_int_cumulative)) %>% 
@@ -56,14 +56,14 @@ annual_mhw_panel <-
 annual_env_panel <-
   left_join(annual_sst_panel,
             annual_mhw_panel,
-            by = c("coop_name", "eu_rnpa", "year")) %>%
+            by = c("eu_name", "eu_rnpa", "year")) %>%
   replace_na(replace = list(
     mhw_events = 0,
     mhw_days = 0,
     mhw_int_cumulative = 0
   )) %>%
   left_join(periods, by = "year") %>%
-  select(coop_name,
+  select(eu_name,
          eu_rnpa,
          year,
          contains("period"),

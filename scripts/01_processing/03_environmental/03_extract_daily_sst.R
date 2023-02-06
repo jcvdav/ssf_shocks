@@ -9,27 +9,13 @@ library(lubridate)
 library(tidyverse)
 
 # Load data --------------------------------------------------------------------
-turfs <-
-  sf::st_read(dsn = file.path(
-    mex_data_path,
-    "concesiones",
-    "processed",
-    "lobster_turf_polygons.gpkg"
-  )) #%>% 
-#   mutate(lat = st_centroid(.) %>%
-#            st_coordinates() %>%
-#            as.data.frame() %>%
-#            pull(Y)) %>%
-#   arrange(desc(lat))
-# 
-# top_turfs <- head(turfs, 10)
-# bottom_turfs <- tail(turfs, 14)
+# Landings data for reference
+landings <- readRDS(file = here("data", "processed", "annual_fishery_panel.rds"))
 
-# sst_names <- list.files(
-#   path = here::here("data", "raw", "daily_sst", "rasters"),
-#   pattern = "tif",
-#   full.names = T
-# )
+# Polygons
+turfs <- st_read(dsn = here("data",
+                            "processed",
+                            "project_turfs.gpkg"))
 
 my_files <- function(decade){
   list.files(
@@ -55,12 +41,12 @@ print("read all files")
 
 ## PROCESSING ##################################################################
 
-# Define an extractinf function wraper -----------------------------------------
+# Define an extracting function wraper -----------------------------------------
 my_extract <- function(x, y) {
   exact_extract(x = x,
                 y = y, 
                 fun = "mean", 
-                append_cols = c("coop_name", "eu_rnpa"),
+                append_cols = c("eu_name", "eu_rnpa"),
                 progress = T)
 }
 
@@ -71,9 +57,6 @@ extracted <- sst %>%
 
 print("Extracted")
 
-# names <- map(sst$files,
-#              ~str_remove(basename(tools::file_path_sans_ext(.x)), "ncdcOisst21Agg_LonPM180_")) %>% 
-#   unlist()
 
 # Define a pivot function wraper -----------------------------------------------
 my_pivot <- function(data) {
@@ -89,7 +72,7 @@ extracted_long <- extracted %>%
   unnest(sst) %>%
     mutate(t = str_remove(t, "mean.X"),
            t = ymd(t)) %>% 
-  select(coop_name, eu_rnpa, t, temp)
+  select(eu_name, eu_rnpa, t, temp)
 
 print("unnested")
 

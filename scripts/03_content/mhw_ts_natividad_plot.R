@@ -15,10 +15,16 @@
 # Load packages ----------------------------------------------------------------
 
 # Load data --------------------------------------------------------------------
-mhw <- readRDS(file = here("data", "processed", "mhw_by_turf.rds")) %>% 
+mhw <- readRDS(file = here("data", "processed", "mhw_by_turf.rds"))
+
+natividad <- mhw %>% 
   filter(coop_name == "Buzos y Pescadores")
 
 ## VISUALIZE ###################################################################
+
+# X ----------------------------------------------------------------------------
+map(mhw$mhw, lolli_plot, metric = "intensity_cumulative") %>% 
+  plot_grid(plotlist = .)
 
 # X ----------------------------------------------------------------------------
 
@@ -30,9 +36,9 @@ mhw_plot <- function(data){
 }
 
 plot_grid(
-  lolli_plot(mhw$mhw[[1]], metric = "intensity_cumulative") + labs(x = "", y = "Cum. Int. [°C x days]"),
-  lolli_plot(mhw$mhw[[1]], metric = "duration") + labs(x = ""),
-  mhw_plot(mhw$mhw[[1]]),
+  lolli_plot(natividad$mhw[[1]], metric = "intensity_cumulative") + labs(x = "", y = "Cum. Int. [°C x days]"),
+  lolli_plot(natividad$mhw[[1]], metric = "duration") + labs(x = ""),
+  mhw_plot(natividad$mhw[[1]]),
   ncol = 1
 )
 

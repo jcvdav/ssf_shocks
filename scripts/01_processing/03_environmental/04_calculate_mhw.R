@@ -44,7 +44,7 @@ daily_sst_ts <-
 
 # Get HWs ----------------------------------------------------------------------
 mhw <- daily_sst_ts %>%
-  select(coop_name, eu_rnpa, t, temp) %>%
+  select(eu_name, eu_rnpa, t, temp) %>%
   nest(data = c(t, temp)) %>%
   mutate(
     ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2013-12-31")),
