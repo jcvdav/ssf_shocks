@@ -26,7 +26,7 @@ data <-
 
 # X ----------------------------------------------------------------------------
 reg_data <- data %>%
-  group_by(eu_name, main_species_group) %>% 
+  group_by(eu_rnpa, fishery) %>% 
   mutate_at(
     .vars = vars(temp_mean, mhw_int_cumulative, mhw_days, mhw_events),
     .funs = ~ (.x - mean(.x)) / sd(.x)
@@ -38,13 +38,13 @@ reg_data <- data %>%
 
 ## ESTIMATE ####################################################################
 models <- reg_data %>% 
-  group_by(main_species_group) %>%
+  group_by(fishery) %>%
   nest() %>% 
   expand_grid(
-    dep = c("landed_weight", "value"),
+    dep = c("landed_weight"),
     indep = c("temp_mean", "mhw_int_cumulative", "mhw_days", "mhw_events")
   ) %>% 
-  mutate(fml = paste(dep, "~", indep, "+ (", indep, "| eu_name)")) %>% 
+  mutate(fml = paste(dep, "~", indep, "+ (", indep, "| eu_rnpa)")) %>% 
   mutate(model = map2(.x = fml, .y = data, lmer))
 
 # The old approach (shown below) is now commented out because it's easier to

@@ -14,6 +14,7 @@
 
 # Load packages ----------------------------------------------------------------
 library(here)
+library(sf)
 library(lme4)
 library(cowplot)
 library(tidyverse)
@@ -32,7 +33,11 @@ get_mu <- function(obj){
   tibble(x = coef, xmin = coef - sd, xmax = coef + sd)
 }
 
-# # Load data --------------------------------------------------------------------
+# Load data --------------------------------------------------------------------
+centroids <- st_read(here("data", "processed", "centroids.gpkg")) %>% 
+  bind_cols(st_coordinates(.)) %>% 
+  st_drop_geometry() %>% 
+  rename(lon = X, lat = Y)
 # land_mods <- readRDS(file = here("data", "output", "lobster_landing_models.rds"))
 # 
 # rev_mods <- readRDS(file = here("data", "output", "lobster_value_models.rds"))
@@ -68,15 +73,15 @@ get_mu <- function(obj){
 
 mu_data <- models %>%
   mutate(mu = map(model, get_mu)) %>%
-  select(main_species_group, dep, indep, mu) %>% 
+  select(fishery, dep, indep, mu) %>% 
   unnest(mu)
 
 coef_data <- models %>%
   mutate(coeff = map(model, extractr)) %>%
-  select(main_species_group, dep, indep, coeff) %>%
+  select(fishery, dep, indep, coeff) %>%
   unnest(coeff) %>% 
-  left_join(centroids, by = c("grp" = "eu_name")) %>% 
-  left_join(mu_data, by = c("dep", "indep", "main_species_group"))
+  left_join(centroids, by = c("grp" = "eu_rnpa", "fishery")) %>% 
+  left_join(mu_data, by = c("dep", "indep", "fishery"))
   
 
 ## VISUALIZE ###################################################################
@@ -85,19 +90,19 @@ coef_data <- models %>%
 land_coef_plot <- coef_data %>% 
   filter(dep == "landed_weight",
          indep == "mhw_int_cumulative") %>% 
-  mutate(grp = fct_reorder(grp, -condval)) %>% 
+  mutate(grp = fct_reorder(grp, -condval)) %>%
   ggplot(aes(y = grp, x = x + condval)) +
-  geom_rect(data = filter(land_mu_data, measure == "MHW int"),
+  geom_rect(data = filter(mu_data, indep == "MHW int"),
             aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
             inherit.aes = F, fill = "gray80") +
-  geom_vline(data = filter(land_mu_data, measure == "MHW int"),
+  geom_vline(data = filter(mu_data, indep == "MHW int"),
              aes(xintercept = x), color = "black") +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_errorbarh(aes(xmin = x + condval - condsd,
                      xmax = x + condval + condsd),
                  height = 0) +
   geom_point(aes(fill = condval), shape = 21, size = 2) + 
-  facet_wrap( ~ main_species_group, scale = "free_x", ncol = 4) +
+  facet_wrap( ~ fishery, scale = "free_x", nrow = 1) +
   scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
   labs(x = "RE of MHW Cum. Int.",
        y = NULL) +
@@ -110,10 +115,10 @@ coef_sst_plot <- coef_data %>%
   filter(dep == "landed_weight",
          indep == "mhw_int_cumulative") %>% 
   left_join(data %>% 
-              group_by(eu_name) %>% 
+              group_by(eu_rnpa, fishery) %>% 
               summarize(sd = sd(temp_mean),
                         temp_long_term = mean(temp_mean)) %>% 
-              ungroup(), by = c("grp" = "eu_name")) %>% 
+              ungroup(), by = c("grp" = "eu_rnpa", "fishery")) %>% 
   ggplot(aes(x = temp_long_term, y = condval)) +
   geom_hline(yintercept = 0, linetype = "dashed") + 
   geom_errorbar(aes(ymin = condval -condsd,
@@ -126,7 +131,8 @@ coef_sst_plot <- coef_data %>%
        y = "RE of MHW Cum. Int.") +
   theme_bw() +
   theme(legend.position = "None",
-        strip.background = element_blank())
+        strip.background = element_blank()) +
+  facet_wrap(~fishery, scales = "free")
 
 
 coef_lat_plot <- coef_data %>% 
@@ -143,7 +149,8 @@ coef_lat_plot <- coef_data %>%
        y = "RE of MHW Cum. Int.") +
   theme_bw() +
   theme(legend.position = "None",
-        strip.background = element_blank())
+        strip.background = element_blank()) +
+  facet_wrap(~fishery, scale = "free")
 
 full_plot <- plot_grid(land_coef_plot, coef_sst_plot, coef_sst_plot,
                        ncol = 1,

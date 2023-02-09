@@ -9,13 +9,11 @@ library(lubridate)
 library(tidyverse)
 
 # Load data --------------------------------------------------------------------
-# Landings data for reference
-landings <- readRDS(file = here("data", "processed", "annual_fishery_panel.rds"))
 
 # Polygons
 turfs <- st_read(dsn = here("data",
                             "processed",
-                            "project_turfs.gpkg"))
+                            "turf_polygons.gpkg"))
 
 my_files <- function(decade){
   list.files(
@@ -46,7 +44,7 @@ my_extract <- function(x, y) {
   exact_extract(x = x,
                 y = y, 
                 fun = "mean", 
-                append_cols = c("eu_name", "eu_rnpa"),
+                append_cols = c("eu_rnpa", "fishery"),
                 progress = T)
 }
 
@@ -72,7 +70,7 @@ extracted_long <- extracted %>%
   unnest(sst) %>%
     mutate(t = str_remove(t, "mean.X"),
            t = ymd(t)) %>% 
-  select(eu_name, eu_rnpa, t, temp)
+  select(eu_rnpa, fishery, t, temp)
 
 print("unnested")
 
