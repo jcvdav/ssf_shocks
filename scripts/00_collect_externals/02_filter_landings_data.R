@@ -40,7 +40,7 @@ eu_rnpas <- c(eu_rnpas, "0203002125")
 # Define species I want --------------------------------------------------------
 spp <- c(
   "LANGOSTA",
-  # "PEPINO DE MAR",
+  "PEPINO DE MAR",
   "ERIZO"
 )
 
@@ -53,7 +53,8 @@ filtered <- landings %>%
          eu_rnpa %in% eu_rnpas) %>% 
   mutate(main_species_group = case_when(
     main_species_group == "LANGOSTA" ~ "lobster",
-    main_species_group == "ERIZO" ~ "urchin")) %>% 
+    main_species_group == "ERIZO" ~ "urchin",
+    main_species_group == "PEPINO DE MAR" ~ "sea_cucumber")) %>% 
   left_join(periods, by = "year") %>% 
   mutate(ifelse(eu_rnpa == "0203002125", "0203126552", eu_rnpa)) %>% 
   group_by(eu_rnpa, main_species_group) %>% 

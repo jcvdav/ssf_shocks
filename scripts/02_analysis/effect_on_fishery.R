@@ -47,6 +47,7 @@ models <- reg_data %>%
   mutate(fml = paste(dep, "~", indep, "+ (", indep, "| eu_rnpa)")) %>% 
   mutate(model = map2(.x = fml, .y = data, lmer))
 
+
 # The old approach (shown below) is now commented out because it's easier to
 # apply all models at once
 # # Landings ---------------------------------------------------------------------

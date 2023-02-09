@@ -13,18 +13,31 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
+library(here)
+library(heatwaveR)
+library(magrittr)
+library(tidyverse)
 
 # Load data --------------------------------------------------------------------
 mhw <- readRDS(file = here("data", "processed", "mhw_by_turf.rds"))
 
-natividad <- mhw %>% 
-  filter(coop_name == "Buzos y Pescadores")
+
+my_plot <- function(data){
+  ggplot(data$event, aes(x = date_peak, y = intensity_cumulative, ymax = intensity_cumulative)) +
+    geom_linerange(aes(ymin = 0), linewidth = 0.5) +
+    geom_point(size = 1) +  
+    theme_minimal() +
+    theme(axis.title = element_blank(),
+          panel.grid = element_blank())
+}
 
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
-map(mhw$mhw, lolli_plot, metric = "intensity_cumulative") %>% 
-  plot_grid(plotlist = .)
+mhw %>%
+  filter(fishery == "lobster") %$% 
+  map(mhw, my_plot) %>% 
+  plot_grid(plotlist = ., ncol = 5)
 
 # X ----------------------------------------------------------------------------
 

@@ -35,7 +35,6 @@ sst <- tibble(decade = c("198", "199", "200", "201", "202")) %>%
          s = map(files, stack),
          s = map2(.x = s, .y = name, .f = my_name))
 
-print("read all files")
 
 ## PROCESSING ##################################################################
 
@@ -53,7 +52,6 @@ extracted <- sst %>%
   mutate(sst = map(s, my_extract, y = turfs)) %>% 
   select(decade, files, sst)
 
-print("Extracted")
 
 
 # Define a pivot function wraper -----------------------------------------------
@@ -72,7 +70,6 @@ extracted_long <- extracted %>%
            t = ymd(t)) %>% 
   select(eu_rnpa, fishery, t, temp)
 
-print("unnested")
 
 ## EXPORT ######################################################################
 
