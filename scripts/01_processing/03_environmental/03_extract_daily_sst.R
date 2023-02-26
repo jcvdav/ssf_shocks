@@ -1,8 +1,20 @@
+################################################################################
+# title
+################################################################################
+#
+# Juan Carlos Villaseñor-Derbez
+# juancvd@stanford.edu
+# date
+#
+# Description
+#
+################################################################################
+
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
 library(here)
-library(raster)
+library(terra)
 library(sf)
 library(exactextractr)
 library(lubridate)
@@ -32,24 +44,20 @@ sst <- tibble(decade = c("198", "199", "200", "201", "202")) %>%
   mutate(files = map(decade, my_files),
          name = map(files,
                     ~str_remove(basename(tools::file_path_sans_ext(.x)), "ncdcOisst21Agg_LonPM180_")),
-         s = map(files, stack),
+         s = map(files, terra::rast),
          s = map2(.x = s, .y = name, .f = my_name))
 
 
 ## PROCESSING ##################################################################
 
-# Define an extracting function wraper -----------------------------------------
-my_extract <- function(x, y) {
-  exact_extract(x = x,
-                y = y, 
-                fun = "mean", 
-                append_cols = c("eu_rnpa", "fishery"),
-                progress = T)
-}
-
-# Apply extracting function wraper to each decade's stack ----------------------
+# Apply extracting function to each decade's stack -----------------------------
 extracted <- sst %>% 
-  mutate(sst = map(s, my_extract, y = turfs)) %>% 
+  mutate(sst = map(.x = s,
+                   .f = ~exact_extract(x = .x,
+                                       y = turfs, 
+                                       fun = "mean", 
+                                       append_cols = c("eu_rnpa", "fishery"),
+                                       progress = T))) %>% 
   select(decade, files, sst)
 
 
