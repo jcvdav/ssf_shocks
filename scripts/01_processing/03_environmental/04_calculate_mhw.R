@@ -47,7 +47,7 @@ mhw <- daily_sst_ts %>%
   select(eu_rnpa, fishery, t, temp) %>%
   nest(data = c(t, temp)) %>%
   mutate(
-    ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2013-12-31")),
+    ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31")),
     mhw = map(ts, detect_event),
     summary = map(mhw, anual_intensity)
   )
