@@ -20,6 +20,14 @@ library(tidyverse)
 
 # Load data --------------------------------------------------------------------
 mhw_by_turf <- readRDS(here("data", "processed", "mhw_by_turf.rds"))
+
+std_normal <- function(x, year, cutoff_year = 2013) {
+  (x - mean(x[year <= cutoff_year], na.rm = T)) / sd(x[year <= cutoff_year], na.rm = T)
+}
+
+cv <- function(x, year, cutoff_year = 2013){
+  sd(x[year <= cutoff_year], na.rm = T) / mean(x[year <= cutoff_year], na.rm = T)
+}
 ## PROCESSING ##################################################################
 
 # X ----------------------------------------------------------------------------
@@ -38,7 +46,9 @@ annual_sst_panel <-
   ungroup() %>%
   group_by(eu_rnpa, fishery) %>% 
   mutate(temp_mean_lag = lag(temp_mean),
-         temp_long_term = mean(temp_mean)) %>% 
+         temp_long_term = mean(temp_mean),
+         temp_cv = cv(temp_mean, year),
+         norm_temp_mean = std_normal(temp_mean, year)) %>% 
   ungroup()
 
 # X ----------------------------------------------------------------------------
@@ -49,7 +59,10 @@ annual_mhw_panel <-
   group_by(eu_rnpa, fishery) %>% 
   mutate(mhw_events_lag = lag(mhw_events),
          mhw_days_lag = lag(mhw_days),
-         mhw_int_cumulative_lag = lag(mhw_int_cumulative)) %>% 
+         mhw_int_cumulative_lag = lag(mhw_int_cumulative),
+         norm_mhw_events = std_normal(mhw_events, year),
+         norm_mhw_days = std_normal(mhw_days, year),
+         norm_mhw_int_cumulative = std_normal(mhw_int_cumulative, year)) %>% 
   ungroup()
 
 # X ----------------------------------------------------------------------------
@@ -60,7 +73,10 @@ annual_env_panel <-
   replace_na(replace = list(
     mhw_events = 0,
     mhw_days = 0,
-    mhw_int_cumulative = 0
+    mhw_int_cumulative = 0,
+    norm_mhw_events = 0,
+    norm_mhw_days = 0,
+    norm_mhw_int_cumulative = 0
   )) %>%
   left_join(periods, by = "year") %>%
   select(fishery,
