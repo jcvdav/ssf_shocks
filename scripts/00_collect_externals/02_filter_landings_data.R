@@ -25,13 +25,14 @@ landings <- readRDS(
     "data",
     "mex_landings",
     "clean",
-    "mex_annual_landings_by_eu.rds"
+    "mex_monthly_landings_by_eu.rds"
   )
 )
 
 eu_rnpas <-
   sf::st_read(dsn = here("data", "processed", "turf_polygons.gpkg")) %>% 
   sf::st_drop_geometry() %>% 
+  filter(!eu_rnpa == "0203008198") %>% # This EU all of a suddedn caught 100-times more than usual. It's either poaching or an error
   pull(eu_rnpa) %>% 
   unique()
 
@@ -44,17 +45,32 @@ spp <- c(
   "ERIZO"
 )
 
+
+seasons <- expand_grid(main_species_group = spp,
+                       month = 1:12) %>% 
+  mutate(open = case_when((main_species_group == "LANGOSTA" & (month >= 9 | month <= 2)) ~ T,
+                          (main_species_group == "PEPINO DE MAR" & between(month, 3, 9)) ~ T,
+                          (main_species_group == "ERIZO" & (month >= 7 | month <= 2)) ~ T,
+                          T ~ F),
+         within_year = main_species_group == "PEPINO DE MAR") %>% 
+  filter(open) %>% 
+  select(main_species_group, month, within_year)
+
 ## PROCESSING ##################################################################
 
 # X ----------------------------------------------------------------------------
 filtered <- landings %>%
-  filter(main_species_group %in% spp,
-         between(year, 2003, 2021),                                             # Most permits were granted in 2002
-         eu_rnpa %in% eu_rnpas) %>% 
+  inner_join(seasons, by = c("main_species_group", "month")) %>% 
+  filter(eu_rnpa %in% eu_rnpas) %>% 
   mutate(main_species_group = case_when(
     main_species_group == "LANGOSTA" ~ "lobster",
     main_species_group == "ERIZO" ~ "urchin",
     main_species_group == "PEPINO DE MAR" ~ "sea_cucumber")) %>% 
+  mutate(year = ifelse(!within_year & month <= 2, year -1, year)) %>% 
+  filter(between(year, 2002, 2021)) %>%                                              # Most permits were granted in 2002)
+  group_by(year, eu_rnpa, main_species_group) %>% 
+  summarize(landed_weight = sum(landed_weight),
+            value = sum(value)) %>% 
   left_join(periods, by = "year") %>% 
   mutate(ifelse(eu_rnpa == "0203002125", "0203126552", eu_rnpa)) %>% 
   group_by(eu_rnpa, main_species_group) %>% 
@@ -67,10 +83,8 @@ filtered <- landings %>%
   group_by(eu_rnpa, main_species_group) %>% 
   filter(all(n2 >= 3)) %>%
   select(-c(n, n2)) %>% 
-  mutate(landed_weight = landed_weight / 1e3,
-         value = value / 1e6) %>%
   group_by(eu_rnpa, main_species_group) %>% 
-  mutate(norm_landed_weight = (landed_weight - mean(landed_weight)) / sd(landed_weight),
+  mutate(norm_landed_weight = (landed_weight - mean(landed_weight[year <= 2013])) / sd(landed_weight[year <= 2013]),
          norm_value = (value - mean(value)) / sd(value)) %>%
   ungroup() %>% 
   mutate(balanced = year >= 2008) %>% 
