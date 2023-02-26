@@ -18,11 +18,10 @@ library(tidyverse)
 
 
 turfs <-
-  sf::st_read(dsn = file.path(
-    mex_data_path,
-    "concesiones",
+  sf::st_read(dsn = here(
+    "data",
     "processed",
-    "lobster_turf_polygons.gpkg"
+    "turf_polygons.gpkg"
   ))
 
 corners <- st_bbox(turfs)
