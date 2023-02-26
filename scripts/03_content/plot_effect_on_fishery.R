@@ -16,226 +16,122 @@
 library(here)
 library(sf)
 library(lme4)
+library(ggimage)
 library(cowplot)
-library(tidyverse)
 library(broom)
-
-# Define functions -------------------------------------------------------------
-extractr <- function(obj, pattern = "mhw|temp"){
-  as.data.frame(ranef(obj)) %>%
-    filter(str_detect(term, pattern))
-}
-
-get_mu <- function(obj){
-  coef <- fixef(obj)[2]
-  vars <- obj %>% vcov() %>% diag()
-  sd <- sqrt(vars[2])
-  tibble(x = coef, xmin = coef - sd, xmax = coef + sd)
-}
+library(magrittr)
+library(tidyverse)
 
 # Load data --------------------------------------------------------------------
-centroids <- st_read(here("data", "processed", "centroids.gpkg")) %>% 
-  bind_cols(st_coordinates(.)) %>% 
-  st_drop_geometry() %>% 
-  rename(lon = X, lat = Y)
-# land_mods <- readRDS(file = here("data", "output", "lobster_landing_models.rds"))
-# 
-# rev_mods <- readRDS(file = here("data", "output", "lobster_value_models.rds"))
-# 
-# ## PROCESSING ##################################################################
-# 
-# # Extract RE coefficients ------------------------------------------------------
-# land_coefs <- land_mods %>% 
-#   map_df(extractr, .id = "measure") %>%
-#   mutate(variable = "Landings")
-# 
-# rev_coefs <- rev_mods %>% 
-#   map_df(extractr, .id = "measure") %>%
-#   mutate(variable = "Revenues")
-# 
-# coef_data <- 
-#   bind_rows(land_coefs, rev_coefs) %>% 
-#   mutate(grp = fct_reorder(grp, -condval)) %>% 
-#   group_by(measure, variable) %>% 
-#   mutate(condval_col = condval / max(condval))
+models <- readRDS(file = here("data", "output", "effect_on_fishery_models.rds"))
 
-# Extract central coefficient of independent variable --------------------------
-# land_mu_data <- land_mods %>% 
-#   map_df(get_mu, .id = "measure") %>%
-#   mutate(variable = "Landings")
-# 
-# rev_mu_data <- rev_mods %>% 
-#   map_df(get_mu, .id = "measure") %>%
-#   mutate(variable = "Revenues")
-# 
-# mu_data <- 
-#   bind_rows(land_mu_data, rev_mu_data)
-
-mu_data <- models %>%
-  mutate(mu = map(model, get_mu)) %>%
-  select(fishery, dep, indep, mu) %>% 
-  unnest(mu)
-
-coef_data <- models %>%
-  mutate(coeff = map(model, extractr)) %>%
-  select(fishery, dep, indep, coeff) %>%
-  unnest(coeff) %>% 
-  left_join(centroids, by = c("grp" = "eu_rnpa", "fishery")) %>% 
-  left_join(mu_data, by = c("dep", "indep", "fishery")) %>% 
-  left_join(calcs, by = c("grp" = "eu_rnpa", "fishery")) %>% 
-  mutate(management = ifelse(grp %in% c("0301000113", "0301000089", "0313000028", "0301000097", "0203000302",
-                                        "0301000105", "0203008305", "0203000278", "0203000021", "0310000013",
-                                        "0313000036", "0203014063", "0203008149", "0301000089", "0203000302",
-                                        "0203000278", "0203011457"), "C", "P")) 
+# Define functions -------------------------------------------------------------
+coefplot <- function(fishery, data, model){
+  # browser()
   
+  # Get the title --------------------------------------------------------------
+  title <- str_to_title(str_replace_all(fishery, "_", " "))
+  
+  img <- ifelse(title == "Urchin",
+                here("data", "img", paste0(title, ".png")),
+                here("data", "img", paste0(title, "_90.png")))
+  
+  # Get the max MHW ------------------------------------------------------------
+  max_mhw <- data %>% 
+    group_by(eu_rnpa) %>% 
+    summarize(max_mhw_int_cumulative = max(norm_mhw_int_cumulative)) %>% 
+    ungroup()
+  
+  # Build plotting data --------------------------------------------------------
+  if(class(model) == "fixest") {
+    
+    xlab <- expression(beta[fe])
+    
+    plot_data <- broom::tidy(model) %>% 
+      mutate(term = str_extract(term, "[:digit:]+")) %>% 
+      left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
+      mutate(term = fct_reorder(term, -estimate))  
+  }
+  
+  if(class(model) == "lmerMod") {
+    
+    xlab <- expression(beta[re])
+    singular <- isSingular(model)
+    
+    coef <- fixef(model)[2]
+    vars <- model %>% vcov() %>% diag()
+    sd <- sqrt(vars[2])
+    
+    plot_data <- model %>%
+      ranef() %>% 
+      as_tibble() %>%
+      filter(str_detect(term, "temp|mhw")) %>% 
+      mutate(estimate = coef + condval) %>% 
+      select(term = grp, estimate, std.error = condsd) %>% 
+      left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
+      mutate(term = fct_reorder(term, -estimate))  
+  }
+  
+  # Build the plot -------------------------------------------------------------
+  p <- ggplot(data = plot_data,
+              mapping = aes(x = estimate,
+                            y = term)) +
+    geom_image(image = img,
+               x = 0.9 * max(plot_data$estimate),
+               y = 0.9 * length(unique(plot_data$term)),
+               inherit.aes = F,
+               size = 0.2) +
+    geom_vline(xintercept = 0,
+               linetype = "dashed",
+               linewidth = 1) +
+    geom_pointrange(aes(fill = max_mhw_int_cumulative,
+                        xmin = estimate - std.error,
+                        xmax = estimate + std.error),
+                    shape = 21) + 
+    scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
+                                                            type = "continuous")) +
+    labs(title = title,
+         x = xlab,
+         y = NULL,
+         fill = expression(widehat(MHWCI)[max])) +
+    guides(fill = guide_colorbar(frame.colour = "black",
+                                 ticks.colour = "black")) +
+    theme(legend.position = c(0, 0),
+          legend.justification = c(0, 0))
+  
+  if(class(model) == "lmerMod") {
+    p <- p + geom_vline(xintercept = coef, linetype = "dashed", color = "red")
+  }
+  
+  # if(singular){
+  #   p <- ggplot() + geom_text(x = 0, label = "ESTIMATION IS VOID")
+  # }
+  
+  return(p)
+}
 
 ## VISUALIZE ###################################################################
+fe_plots <- models %>% 
+  arrange(indep) %>%
+  mutate(plot = pmap(.l = list(fishery,
+                               data, 
+                               fe_model),
+                     .f = coefplot))
 
-# Plot landings coefficients ---------------------------------------------------
-land_coef_plot <- coef_data %>% 
-  filter(dep == "landed_weight",
-         indep == "mhw_int_cumulative") %>% 
-  mutate(grp = fct_reorder(grp, -(condval * (fishery == "lobster")))) %>%
-  ggplot(aes(y = grp, x = x + condval)) +
-  geom_rect(data = filter(mu_data, indep == "mhw_int_cumulative"),
-            aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
-            inherit.aes = F, fill = "gray80") +
-  geom_vline(data = filter(mu_data, indep == "mhw_int_cumulative"),
-             aes(xintercept = x), color = "black") +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  geom_errorbarh(aes(xmin = x + condval - condsd,
-                     xmax = x + condval + condsd),
-                 height = 0) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) + 
-  facet_wrap( ~ fishery, scale = "free", nrow = 1) +
-  scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
-  labs(x = "RE of MHW Cum. Int.",
-       y = NULL) +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank(),
-        axis.text.y = element_text(size = 5))
+re_land_mhw_cum_int <- fe_plots %>% 
+  filter(indep == "norm_mhw_int_cumulative") %$% 
+  plot_grid(plotlist = plot, ncol = 3)
 
-coef_sst_plot <- coef_data %>% 
-  filter(dep == "landed_weight",
-         indep == "mhw_int_cumulative") %>% 
-  left_join(data %>% 
-              group_by(eu_rnpa, fishery) %>% 
-              summarize(sd = sd(temp_mean),
-                        temp_long_term = mean(temp_mean)) %>% 
-              ungroup(), by = c("grp" = "eu_rnpa", "fishery")) %>% 
-  ggplot(aes(x = temp_long_term, y = x + condval)) +
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_errorbar(aes(ymin = x + condval -condsd,
-                    ymax = x + condval + condsd),
-                width = 0) +
-  geom_errorbarh(aes(xmin = temp_long_term - sd, xmax = temp_long_term + sd)) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) +
-  geom_smooth(method = "lm", linetype = "dashed", linewidth = 0.5, color = "black") +
-  scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
-  labs(x = "Mean SST (°C)",
-       y = "RE") +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank()) +
-  facet_wrap(~fishery, scales = "free")
-
-
-coef_lat_plot <- coef_data %>% 
-  filter(dep == "landed_weight",
-         indep == "mhw_int_cumulative") %>% 
-  ggplot(aes(x = lat, y = x + condval)) +
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_errorbar(aes(ymin = x + condval -condsd,
-                    ymax = x + condval + condsd),
-                width = 0) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) +
-  geom_smooth(method = "lm", linetype = "dashed", linewidth = 0.5, color = "black") +
-  scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
-  labs(x = "°Latitude (Centroid)",
-       y = "RE") +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank()) +
-  facet_wrap(~fishery, scales = "free")
-
-
-coef_depth_plot <- coef_data %>% 
-  filter(dep == "landed_weight",
-         indep == "mhw_int_cumulative") %>% 
-  ggplot(aes(x = relative_volume, y = x + condval)) +
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_errorbar(aes(ymin = x + condval -condsd,
-                    ymax = x + condval + condsd),
-                width = 0) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) +
-  geom_smooth(method = "lm", linetype = "dashed", linewidth = 0.5, color = "black") +
-  scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
-  labs(x = "Depth refugia (m)",
-       y = "RE") +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank()) +
-  facet_wrap(~fishery, scales = "free")
-
-full_plot <- plot_grid(coef_sst_plot, coef_sst_plot, coef_depth_plot,
-                       ncol = 1)
-
-startR::lazy_ggsave(plot = land_coef_plot,
-                    filename = "land_coef_plot",
-                    width = 8.7,
-                    height = 8.7 * 1.2)
-
-# Now revenues
-rev_coef_plot <- coef_data %>% 
-  filter(measure == "MHW int") %>% 
-  mutate(grp = fct_reorder(grp, -condval)) %>% 
-  filter(variable == "Revenues") %>% 
-  ggplot(aes(y = grp, x = condval)) +
-  geom_rect(data = filter(rev_mu_data, measure == "MHW int"), aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), inherit.aes = F, fill = "gray80") +
-  geom_vline(data = filter(rev_mu_data, measure == "MHW int"), aes(xintercept = x), color = "black") +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  geom_errorbarh(aes(xmin = condval -condsd,
-                     xmax = condval + condsd),
-                 height = 0) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) + 
-  scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
-  labs(x = "RE of MHW Cum. Int.",
-       y = NULL) +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank())
-
-
-# Mega plot --- needs to be fixed
-coef_data %>% 
-  # left_join(centroids, by = c("grp"= "eu_name")) %>% 
-  # mutate(grp = fct_reorder(grp, lat)) %>% 
-  ggplot(aes(y = grp, x = condval)) +
-  geom_rect(data = mu_data, aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), inherit.aes = F, fill = "gray80") +
-  geom_vline(xintercept = 0, linetpe = "dashed") +
-  geom_vline(data = mu_data, aes(xintercept = x), color = "black") +
-  geom_errorbarh(aes(xmin = condval -condsd,
-                     xmax = condval + condsd),
-                 height = 0) +
-  geom_point(aes(fill = condval), shape = 21, size = 2) + 
-  facet_wrap(fishery ~ indep, ncol = 4, scales = "free") +
-  scale_fill_gradient2(low = "red", high = "steelblue", mid = "white") +
-  labs(x = "Temperature influence",
-       y = NULL) +
-  theme_bw() +
-  theme(legend.position = "None",
-        strip.background = element_blank())
-
+re_plots <- models %>% 
+  arrange(indep) %>% 
+  mutate(plot = pmap(.l = list(fishery,
+                               data, 
+                               re_model),
+                     .f = coefplot)) %$% 
+  plot_grid(plotlist = plot, ncol = 3)
 
 ## EXPORT ######################################################################
-
-# X ----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
+startR::lazy_ggsave(plot = re_land_mhw_cum_int,
+                    filename = "land_coef_plot",
+                    width = 18,
+                    height = 10)
