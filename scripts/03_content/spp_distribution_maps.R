@@ -22,10 +22,15 @@ library(tidyverse)
 # Load data --------------------------------------------------------------------
 
 lob <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Panulirus_interruptus.tif")) 
-purp <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Strongylocentrotus_purpuratus.tif")) %>% 
+# red <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Mesocentrotus_franciscanus.tif")) 
+pur <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Strongylocentrotus_purpuratus.tif")) %>% 
   crop(lob)
 pep <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Parastichopus_parvimensis.tif")) %>% 
   crop(lob)
+  
+
+img <- tibble(species = sort(unique(data$fishery)),
+              img = here("data", "img", paste0(species, ".png")))
 
 mex <- ne_countries(scale = "large", country = c("Mexico", "United States of America"), returnclass = "sf") %>% 
   st_crop(lob)
@@ -35,34 +40,37 @@ my_df <- function(r){
     magrittr::set_colnames(c("x", "y", "layer"))
 }
 
-df <- list(lob, purp, pep) %>% 
-  set_names(c("P. interruptus", "S. purpuratus", "P. parvimensis")) %>% 
+df <- list(lob, pur, pep) %>% 
+  set_names(c("Lobster", "Urchin", "Sea cucumber")) %>% 
   map_dfr(my_df, .id = "species") %>% 
   drop_na() %>% 
   # mutate(species = case_when(species == 1 ~ "P. interruptus",
                              # species == 2 ~ "S. purpuratus",
                              # species == 3 ~ "P. parvimensis")) %>% 
   filter(#layer > 0.5,
-         y > 5)
+         y > 5) %>% 
+  filter(between(y, 23, 35.5), between(x, -121, -111))
 
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
 
 maps <- ggplot() +
-  geom_tile(data = df %>% filter(between(y, 23, 35.5), between(x, -121, -111)), aes(x = x, y = y, fill = layer)) +
+  geom_tile(data = df,
+            mapping = aes(x = x, y = y, fill = layer)) +
   geom_sf(data = mex) +
+  geom_image(data = img,
+             mapping = aes(x = -113, y = 34, image = img),
+             inherit.aes = F,
+             size = 0.2, by = "height") +
   geom_hline(yintercept = 25) +
   facet_wrap(~species) +
   scale_fill_viridis_c(limits = c(0.5, 1), option = "B") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   # cowplot::theme_map() +
-  theme_bw() +
   theme(legend.justification = c(0, 0),
         legend.position = c(0, 0),
-        legend.background = element_blank(),
-        strip.background = element_blank(),
         axis.title = element_blank()) +
   guides(fill = guide_colorbar(title = "p",
                                frame.colour = "black",
@@ -78,13 +86,15 @@ dists <- df %>%
   geom_point(shape = 21, color = "black", fill = "navyblue", alpha = 0.5, size = 4) +
   facet_wrap(~species, scales = "free_x") +
   scale_y_continuous(breaks = seq(0, 1, by = 0.2), labels = seq(0, 1, by = 0.2), limits = c(0, 1)) +
-  theme_bw() +
-  theme(strip.background = element_blank(),
-        strip.text = element_blank()) +
+  theme(strip.text = element_blank()) +
   labs(x = "Latitude", y = "p")
 
-plot_grid(maps, dists, rel_heights = c(2, 1), ncol = 1, align = "v")
+p <- plot_grid(maps, dists, rel_heights = c(2, 1), ncol = 1, align = "v", labels = "AUTO")
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
+startR::lazy_ggsave(plot = p,
+                    filename = "spp_dists",
+                    width = 20,
+                    height = 15)
