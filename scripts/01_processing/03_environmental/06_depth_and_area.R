@@ -47,11 +47,14 @@ extracted <- exact_extract(x = S,
 # X ----------------------------------------------------------------------------
 calcs <- extracted %>% 
   mutate(relative_volume = sum.depth / sum.area) %>% 
-  select(eu_rnpa, fishery, depth = sum.depth, relative_volume)
+  select(eu_rnpa, fishery, depth = sum.depth, area = sum.area, relative_volume)
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
+
+saveRDS(object = calcs,
+        file = here("data", "processed", "depth_and_area.rds"))
 
 
 
