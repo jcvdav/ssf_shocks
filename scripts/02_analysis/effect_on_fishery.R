@@ -14,15 +14,13 @@
 
 # Load packages ----------------------------------------------------------------
 library(here)
-library(modelsummary)
 library(lme4)
 library(fixest)
 library(tidyverse)
 
 # Load data --------------------------------------------------------------------
 data <-
-  readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
-  filter(balanced)
+  readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds"))
 
 
 ## ESTIMATE ####################################################################

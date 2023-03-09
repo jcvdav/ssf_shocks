@@ -14,7 +14,7 @@
 
 # Load packages ----------------------------------------------------------------
 library(here)
-library(sf)
+# library(sf)
 library(lme4)
 library(ggimage)
 library(cowplot)
@@ -45,7 +45,7 @@ coefplot <- function(fishery, data, model){
   # Build plotting data --------------------------------------------------------
   if(class(model) == "fixest") {
     
-    xlab <- expression(beta[fe])
+    xlab <- expression(hat(beta[fe]))
     
     plot_data <- broom::tidy(model) %>% 
       mutate(term = str_extract(term, "[:digit:]+")) %>% 
@@ -118,7 +118,7 @@ fe_plots <- models %>%
                                fe_model),
                      .f = coefplot))
 
-re_land_mhw_cum_int <- fe_plots %>% 
+fe_land_mhw_cum_int <- fe_plots %>% 
   filter(indep == "norm_mhw_int_cumulative") %$% 
   plot_grid(plotlist = plot, ncol = 3)
 
@@ -127,11 +127,13 @@ re_plots <- models %>%
   mutate(plot = pmap(.l = list(fishery,
                                data, 
                                re_model),
-                     .f = coefplot)) %$% 
-  plot_grid(plotlist = plot, ncol = 3)
+                     .f = coefplot))
 
 ## EXPORT ######################################################################
-startR::lazy_ggsave(plot = re_land_mhw_cum_int,
+startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
                     filename = "land_coef_plot",
                     width = 18,
                     height = 10)
+
+
+# NEEd to order panels so that they are lobster, cucumber, urchin panels

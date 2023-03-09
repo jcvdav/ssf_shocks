@@ -23,7 +23,7 @@ RS_sst_ts <-
   readRDS(file = here("data", "processed", "daily_mean_sst_by_turf.rds"))
 
 CMIP_sst_ts <-
-  readRDS(file = here("data", "processed", "ssp245_daily_mean_sst_by_turf.rds"))
+  readRDS(file = here("data", "processed", "ssp126_daily_mean_sst_by_turf.rds"))
 
 ## PROCESSING ##################################################################
 
@@ -79,12 +79,25 @@ testing <- function(year_out, data) {
   return(results)
 }
 
+# X ----------------------------------------------------------------------------
+daily_sst_ts <- bind_rows(RS_sst_ts,
+                          CMIP_sst_ts,
+                          .id = "source")
+
 fix <- daily_sst_ts %>% 
   filter(year(t) >= 2015 ,
-         year(t) <= 2021) %>% 
+         year(t) <= 2030) %>% 
   mutate(source = ifelse(source == 1, "rs", "cmip")) %>% 
   pivot_wider(names_from = source, values_from = temp) %>% 
   drop_na()
+
+daily_sst_ts %>% 
+  filter(eu_rnpa == "0203002829",
+         year(t) >= 2000 ,
+         year(t) <= 2021) %>% 
+  mutate(source = ifelse(source == 1, "rs", "cmip")) %>% 
+  ggplot(aes(x = t, y = temp, color = source)) +
+  geom_line()
 
 c(2015:2021) %>% 
   map_dfr(testing, data = fix) %>% 
@@ -92,19 +105,6 @@ c(2015:2021) %>%
   geom_point() +
   facet_wrap(~variable, scales = "free_y", ncol = 1)
 
-# X ----------------------------------------------------------------------------
-daily_sst_ts <- bind_rows(RS_sst_ts,
-                          CMIP_sst_ts,
-                          .id = "source")
-
-bias_correction <- function(data) {
-  inside_data <- data %>% 
-    pivot_wider(names_from = source, values_from = temp) %>% 
-    drop_na()
-  
-  model <- fixest(rs ~ cmip, data = inside_data, vcov = "nw")
-  
-}
 
 overlap_data <- daily_sst_ts %>% 
   filter(year(t) >= 2015 ,
@@ -113,21 +113,15 @@ overlap_data <- daily_sst_ts %>%
   mutate(source = ifelse(source == 1, "rs", "cmip")) %>%
   select(t, fishery, eu_rnpa, source, temp) %>% 
   pivot_wider(names_from = source, values_from = temp) %>% 
-  drop_na()
-
-correction_models <- overlap_data %>% 
-  group_by(fishery, eu_rnpa) %>% 
-  nest() %>% 
-  mutate(model = map(data, ~lm(rs ~ cmip, data = .x))) %>% 
-  select(-data)
+  drop_na() %>% 
+  mutate(month = month(t))
 
 # NOTES TO DO:
 # Make a table of correction_models and export it
 
 tidy_predict <- function(object, data){
   data %>% 
-    mutate(temp = predict(object, newdata = .)) %>%
-    select(t, temp)
+    mutate(temp = predict(object, newdata = .))
 }
 
 nested_RS <- RS_sst_ts %>% 
@@ -135,19 +129,44 @@ nested_RS <- RS_sst_ts %>%
   group_by(eu_rnpa, fishery) %>% 
   nest()
 
+correction_models <- overlap_data %>% 
+  group_by(fishery, eu_rnpa) %>% 
+  nest() %>% 
+  mutate(model = map(data, ~lm(rs ~ cmip , data = .x))) %>% 
+  select(-data)
+
+correction_factors <- overlap_data %>% 
+  group_by(fishery, eu_rnpa) %>% 
+  summarize(factor = mean(rs/cmip))
+
 corrected <- CMIP_sst_ts %>% 
   rename(cmip = temp) %>% 
   group_by(eu_rnpa, fishery) %>% 
   nest() %>% 
   inner_join(correction_models, by = c("fishery", "eu_rnpa")) %>% 
+  inner_join(correction_factors, by = c("fishery", "eu_rnpa")) %>% 
   mutate(corrected = map2(.x = model,
                           .y = data,
                           .f = ~tidy_predict(object = .x,
-                                             data = .y))) %>% 
+                                             data = .y)),
+         corrected2 = map(.x = data,
+                          .y = factor,
+                          .f = ~(mutate(.x, temp = cmip * .y)))) %>% 
   select(-data) %>% 
   inner_join(nested_RS, by = c("fishery", "eu_rnpa")) %>% 
-  mutate(corrected_long = map2(data, corrected, bind_rows)) %>% 
-  select(eu_rnpa, fishery, corrected_long)
+  mutate(corrected_long = map2(data, corrected, bind_rows),
+         corrected_long2 = map2(data, corrected2, bind_rows)) %>% 
+  select(eu_rnpa, fishery, corrected_long, corrected_long2)
+
+corrected$corrected_long[[1]] %>% ggplot(aes(x = t, y = temp)) + geom_line(linewidth = 0.2)
+corrected$corrected_long2[[1]] %>% ggplot(aes(x = t, y = temp)) + geom_line(linewidth = 0.2)
+
+corrected %>% 
+  head(1) %>% 
+  unnest(corrected_long, corrected_long2) %>% 
+  mutate(combined = pmin(temp, temp1)) %>% 
+  ggplot(aes(x = t, y = combined), color = "red") +
+  geom_line(linewidth = 0.2)
 
 ## EXPORT ######################################################################
 

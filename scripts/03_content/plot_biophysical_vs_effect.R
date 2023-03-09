@@ -92,6 +92,7 @@ scatter_plot <- function(data, variable, lab, img = F) {
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
+# Need to fiddle witht eh coordinates for the images
 lat <- scatter_plot(coef_data, lat, "°Latitude (Centroid)", img = T) +
   theme(legend.position = "none")
 temp <- scatter_plot(coef_data, temp_long_term, "Long-term mean SST (°C)") +

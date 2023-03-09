@@ -44,32 +44,68 @@ library(here)
 library(raster)
 library(ncdf4)
 library(lubridate)
+library(magrittr)
 library(furrr)
 library(tidyverse)
 
 # Define a function to call ----------------------------------------------------
-get_future_sst <- function(filename) {
+get_future_sst <- function(filename,
+                           main_dir = here("data", "raw", "std_climate_model_output")) {
+  
+  # Make sure directory exists
+  if(!dir.exists(main_dir)) {
+    dir.create(main_dir)
+  }
+  
   # Get year, month, and maximum number of years in data set -------------------
   # year <- str_sub(str_extract(filename, "-[:digit:]{8}"), start = 2, end = 5)
   # month <- str_sub(str_extract(filename, "-[:digit:]{8}"), start = 6, end = 7)
   # max_day <- as.numeric(str_remove(str_extract(filename, "[:digit:]{2}.nc"), "\\.nc"))
   
-  # Build URL and filename -----------------------------------------------------
+  # Get filename info ---------------------------------------------------------------
+  # Model name
+  model <- str_remove_all(string = tools::file_path_sans_ext(basename(filename)),
+                          pattern = "tos_Oday_|_ssp[:digit:]{3}_.+")
+  
+  # Scenario
   ssp <- str_extract(filename, "ssp[:digit:]{3}")
-  url <- paste0("https://esgf-data1.llnl.gov/thredds/dodsC/css03_data/CMIP6/ScenarioMIP/NOAA-GFDL/GFDL-ESM4/",
-                ssp,
-                "/r1i1p1f1/Oday/tos/gn/v20180701/",
-                filename)
-  file <- nc_open(filename = url)
+  
+  # Infer date start from filename
+  date_start <- ymd(str_sub(str_extract(string = filename,
+                                        pattern = "_[:digit:]{8}-"),
+                            start = 2,
+                            end = 9))
+  
+  file <- nc_open(filename = filename)
   
   # Deal with coordinates ------------------------------------------------------
   # Get coordinates
-  lon <- ncvar_get(file, "lon")
-  lat <- ncvar_get(file, "lat")
+  lon <- ncvar_get(file, "longitude")
+  lat <- ncvar_get(file, "latitude")
+  
+  centered <- any(lon < 0)
+  mat <- length(dim(lon)) > 1
+  
   
   # Ge the indices for my bounding box
-  lon_indices <- which(between(lon[,1], -119, -110)) %>% range()
-  lat_indices <- which(between(lat[1,], 23, 33)) %>% range()
+  # This allows us to identify -180 to 180 or 0-360
+  if(centered) {
+    if(mat) {
+      lon_indices <- which(between(lon[,1], -119, -110)) %>% range()
+      lat_indices <- which(between(lat[1,], 23, 33)) %>% range()  
+    } else {
+      lon_indices <- which(between(lon, -119, -110)) %>% range()
+      lat_indices <- which(between(lat, 23, 33)) %>% range()  
+    }
+  } else {
+    if(mat) {
+      lon_indices <- which(between(lon[,1], 241, 250)) %>% range()
+      lat_indices <- which(between(lat[1,], 23, 33)) %>% range()
+    }  else {
+      lon_indices <- which(between(lon, 241, 250)) %>% range()
+      lat_indices <- which(between(lat, 23, 33)) %>% range()
+    }
+  }
   
   # Find starting position and number of indices for each lat long
   lon_start <- lon_indices[1]
@@ -77,36 +113,36 @@ get_future_sst <- function(filename) {
   lat_start <- lat_indices[1]
   lat_count <- (diff(lat_indices) + 1)
   
-  # Buidl start and count vectors
+  # Build start and count vectors
   start <- c(lon_start, lat_start)
   count <- c(lon_count, lat_count)
   
   # Get the latitudes and longitudes for our area
-  lons <- ncvar_get(nc = file,
-                    varid = "lon",
-                    start = start,
-                    count = count)
-  lats <- ncvar_get(nc = file,
-                    varid = "lat",
-                    start = start,
-                    count = count)
+  if(mat) {
+    lons <- ncvar_get(nc = file,
+                      varid = "longitude",
+                      start = start,
+                      count = count)
+    lats <- ncvar_get(nc = file,
+                      varid = "latitude",
+                      start = start,
+                      count = count)
+  } else {
+    lons <- ncvar_get(nc = file,
+                      varid = "longitude",
+                      start = lon_start,
+                      count = lon_count)
+    lats <- ncvar_get(nc = file,
+                      varid = "latitude",
+                      start = lat_start,
+                      count = lat_count)
+  }
   
   # Deal with dates ------------------------------------------------------------
   # Extract all difftimes, they all point to "days since 1850-01-01" and ignore
   # leap years, so we have to fix that
   dates <- ncvar_get(nc = file,
                      varid = "time")
-  
-  # Infer date start from filename
-  date_start <- 
-    ymd(
-      str_sub(
-        str_extract(
-          string = filename,
-          pattern = "_[:digit:]{8}-"),
-        start = 2,
-        end = 9)
-    ) 
   
   all_dates <- tibble(index = 1:length(dates),
                       days_since_origin = dates) %>% 
@@ -115,26 +151,45 @@ get_future_sst <- function(filename) {
            is_feb_29 = (day(date) == 29 & month(date) == 2),
            adds = cumsum(is_feb_29),
            fixed_date = date + days(adds)) %>% 
-    filter(year(fixed_date) <= 2050)
+    filter(year(fixed_date) <= 2050) # I only want to project out to 2050
   
-  # Create a reference raster ----------------------------------------------------
-  r_obj <- raster(xmn = -119, xmx = -110,
-                  ymn = 23, ymx = 33,
-                  resolution = c(0.5, 0.5),
-                  crs = "EPSG:4326")
+  # Create a reference raster --------------------------------------------------
+  if(mat) {
+    res <- lon[,1] %>% sort() %>% diff() %>% unique() %>% head(1) %>% as.numeric()
+  } else {
+    res <- lon %>% sort() %>% diff() %>% unique() %>% head(1) %>% as.numeric()
+  }
+  
+  if(centered) {
+    reference_raster <- raster(xmn = -119, xmx = -110,
+                               ymn = 23, ymx = 33,
+                               resolution = res,
+                               crs = "EPSG:4326")
+  } else {
+    reference_raster <- raster(xmn = 241, xmx = 250,
+                               ymn = 23, ymx = 33,
+                               resolution = res,
+                               crs = "EPSG:4326")
+  }
+  
+  
+  out_dir <- here(main_dir, ssp, model)
   
   # Iterate across days --------------------------------------------------------
   for(day in all_dates$index) {
     
     # Define output file name based on date
-    out_file <- here("data", "raw", "climate_data", ssp,
-                     paste0("tos_Oday_GFDL-ESM4_",
-                            ssp,
-                            all_dates$fixed_date[day], ".tif"))
+    out_file <- here(out_dir,
+                     paste0(all_dates$fixed_date[day], ".tif"))
     
-    if(!dir.exists(here("data", "raw", "climate_data", ssp))) {
+    if(!dir.exists(here(out_dir))) {
+      
+      if(!dir.exists(here(main_dir, ssp))) {
+        dir.create(
+          here(main_dir, ssp)
+        )}
       dir.create(
-        here("data", "raw", "climate_data", ssp)
+        out_dir
       )
     }
     
@@ -147,64 +202,62 @@ get_future_sst <- function(filename) {
                        count = c(count, 1))
       
       # Build a data.frame and remove land values
-      data <- tibble(x = as.vector(lons),
-                     y  = as.vector(lats),
-                     tos  = as.vector(tos)) %>% 
-        drop_na()
+      if(mat) {
+        data <- tibble(x = as.vector(lons),
+                       y  = as.vector(lats),
+                       tos  = as.vector(tos)) %>% 
+          drop_na() 
+      } else {
+        data <- expand_grid(lat = as.vector(lats),
+                            lon = as.vector(lons)) %>% 
+          mutate(tos = as.vector(tos)) %>% 
+          dplyr::select(lon, lat, tos) %>% 
+          drop_na()
+      }
       
       # Rasterize our SST file
       sst <- rasterize(x = data[, 1:2], 
-                       y = r_obj, 
+                       y = reference_raster, 
                        field = data[, 3])
       
-      # And expor tit
+      if(!res == 0.25) {
+        factors <- res / 0.25
+        
+        sst <- disaggregate(x = sst,
+                            fact = factors,
+                            method = "bilinear")
+      }
+      
+      if(!centered) {
+        sst <- rotate(sst)
+      }
+      
+      # And export it
       writeRaster(x = sst,
-                  filename = out_file,
-                  overwrite = T) 
-    } # END IF
-  } # END FOOR LOOP
+                  filename = out_file) 
+      
+      # END IF
+    }
+    
+    # END FOOR LOOP
+  }
+  
+  nc_close(file)
   
   # Notify user
   print(paste0("Done with: ", filename))
-  
-} # END FUNCTION
+}
+# END FUNCTION
 
-file_names <- c("tos_Oday_GFDL-ESM4_ssp245_r1i1p1f1_gn_20150101-20241231.nc",
-                "tos_Oday_GFDL-ESM4_ssp245_r1i1p1f1_gn_20250101-20341231.nc",
-                "tos_Oday_GFDL-ESM4_ssp245_r1i1p1f1_gn_20350101-20441231.nc",
-                "tos_Oday_GFDL-ESM4_ssp245_r1i1p1f1_gn_20450101-20541231.nc")
+# Define URLS, models, and scenarios -------------------------------------------
 
-file_names %>%
-  walk(get_future_sst)
 
-# # Define all the file names we want (2025 - 250) -------------------------------
-# 
-# gr <- nc_open("http://esgdata.gfdl.noaa.gov/thredds/dodsC/gfdl_dataroot4/ScenarioMIP/NOAA-GFDL/GFDL-ESM4/ssp245/r1i1p1f1/Oday/tos/gn/v20180701/tos_Oday_GFDL-ESM4_ssp245_r1i1p1f1_gn_20150101-20241231.nc")
-# 
-# 
-# gr_lon <- ncvar_get(gr, "lon")
-# gr_lat <- ncvar_get(gr, "lat")
-# tos <- ncvar_get(gr, "tos", start = c(1, 1, 1), count = c(720, 576, 1))
-# 
-# d <- tibble(gr_lon = as.vector(gr_lon),
-#             gr_lat = as.vector(gr_lat),
-#             tos = as.vector(tos)) %>% 
-#   drop_na()
-# 
-# d %>% 
-#   filter(between(gr_lat, 23, 32.75),
-#          between(gr_lon, -119, -110)) %>% 
-#   ggplot(aes(x = gr_lon, y = gr_lat, fill = tos)) +
-#   geom_raster() +
-#   coord_equal()
-# 
-# 
-# r_obj
-# 
-# 
-# r <- rasterize(x = d[ ,1:2],
-#           y = r_obj,
-#           field = d[ ,3])
-# 
-# 
-# plot(r)
+safe_get_future_sst <- safely(get_future_sst)
+
+# Get data ---------------------------------------------------------------------
+files <- list.files(here::here("data", "raw", "climate_model_output"), recursive = T, pattern = "\\.nc$", full.names = T)
+
+# Run inparallel
+walk(files, safe_get_future_sst)
+
+# DONE!

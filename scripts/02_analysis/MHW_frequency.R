@@ -43,8 +43,8 @@ mhw %>%
   unnest(summary) %>% 
   select(-eu_rnpa) %>%
   filter(between(year, 2014, 2017)) %>% 
-  # group_by(year) %>% 
-  summarize_all(mean)
+  group_by(year) %>%
+  summarize_all(function(x){paste(round(mean(x), 3), round(sd(x), 3))})
 
 mhw %>% 
   select(eu_rnpa, summary) %>% 
@@ -52,15 +52,7 @@ mhw %>%
   select(-eu_rnpa) %>%
   filter(between(year, 2014, 2017)) %>% 
   # group_by(year) %>% 
-  summarize_all(sd)
-
-mhw %>% 
-  select(eu_rnpa, summary) %>% 
-  unnest(summary) %>% 
-  distinct() %>%
-  ggplot(aes(x = year, y = mhw_int_cumulative)) + 
-  stat_summary(geom = "ribbon", fun.data = mean_sdl, na.rm = T) +
-  stat_summary(geom = "line", fun = mean)
+  summarize_all(function(x){tibble(mean = mean(x), sd = sd(x))})
 
 ## VISUALIZE ###################################################################
 
@@ -90,8 +82,6 @@ mhw_by_turf %>%
   ggplot(aes(x = threshold, y = cond_p, group = eu_rnpa)) +
   geom_line() +
   facet_wrap(~fishery, ncol = 2)
-
-
 
 
 events_by_fishery <- mhw %>% 
