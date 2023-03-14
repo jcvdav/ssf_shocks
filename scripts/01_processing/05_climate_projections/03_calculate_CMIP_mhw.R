@@ -36,19 +36,41 @@ anual_intensity <- function(data) {
     )
 }
 
+read_and_merge <- function(file, hist_sst){
+  future <- readRDS(file) %>% 
+    filter(year(t) >= 2022)
+  
+  complete <- bind_rows(hist_sst, future)
+  
+  return(complete)
+}
+
 # Load data --------------------------------------------------------------------
-CMIP_sst_ts <-
-  readRDS(file = here("data", "processed", "ssp245_daily_mean_sst_by_turf.rds"))
+# Historical data to build climatology
+climatologies <- readRDS(file = here("data", "processed", "mhw_by_turf.rds")) %>% 
+  select(eu_rnpa, fishery, ts)
+
+hist_sst <- readRDS(file = here("data", "processed", "daily_mean_sst_by_turf.rds"))
+
+CMIP_sst_ts <- tibble(file = list.files(here("data", "processed", "CMIP_SST_projections"),
+                                        recursive = T,
+                                        full.names = T)) %>% 
+  mutate(ssp = str_extract(file, "ssp[:digit:]{3}"),
+         model = str_remove_all(file, ".+ssp[:digit:]{3}/|\\.rds")) %>% 
+  mutate(data = map(file, read_and_merge, hist_sst = hist_sst)) %>% 
+  unnest(data) %>% 
+  select(model, ssp, eu_rnpa, fishery, t, temp) %>%
+  nest(data = c(t, temp)) 
+
+  
 
 ## PROCESSING ##################################################################
 
 # Get HWs ----------------------------------------------------------------------
-mhw <- CMIP_sst_ts %>% # daily_sst_ts %>%
-  select(eu_rnpa, fishery, t, temp) %>%
-  nest(data = c(t, temp)) %>%
-  head() %>% 
+mhw <- CMIP_sst_ts %>% 
+  arrange(eu_rnpa, ssp, fishery) %>% 
   mutate(
-    ts = map(data, ts2clm, climatologyPeriod = c("2017-01-01", "2047-12-31")),
+    ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31")),
     mhw = map(ts, detect_event),
     summary = map(mhw, anual_intensity)
   )
@@ -57,5 +79,4 @@ mhw <- CMIP_sst_ts %>% # daily_sst_ts %>%
 
 # X ----------------------------------------------------------------------------
 saveRDS(object = mhw,
-        file = here("data", "processed", "ssp245_mhw_by_turf.rds"))
-
+        file = here("data", "processed", "future_mhw_by_turf.rds"))

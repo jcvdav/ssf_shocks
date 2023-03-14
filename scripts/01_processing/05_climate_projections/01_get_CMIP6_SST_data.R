@@ -51,6 +51,14 @@ library(tidyverse)
 # Define a function to call ----------------------------------------------------
 get_future_sst <- function(filename,
                            main_dir = here("data", "raw", "std_climate_model_output")) {
+
+  target_raster <- raster(
+    here(
+      "data",
+      "raw",
+      "daily_sst",
+      "rasters",
+      "ncdcOisst21Agg_LonPM180_2015-01-01.tif"))
   
   # Make sure directory exists
   if(!dir.exists(main_dir)) {
@@ -78,10 +86,14 @@ get_future_sst <- function(filename,
   
   file <- nc_open(filename = filename)
   
+  all_var_names <- file$var %>% names()
+  lon_var_name <- all_var_names[which(all_var_names %in% c("lon", "longitude"))][1]
+  lat_var_name <- all_var_names[which(all_var_names %in% c("lat", "latitude"))][1]
+  
   # Deal with coordinates ------------------------------------------------------
   # Get coordinates
-  lon <- ncvar_get(file, "longitude")
-  lat <- ncvar_get(file, "latitude")
+  lon <- ncvar_get(file, lon_var_name)
+  lat <- ncvar_get(file, lat_var_name)
   
   centered <- any(lon < 0)
   mat <- length(dim(lon)) > 1
@@ -120,20 +132,20 @@ get_future_sst <- function(filename,
   # Get the latitudes and longitudes for our area
   if(mat) {
     lons <- ncvar_get(nc = file,
-                      varid = "longitude",
+                      varid = lon_var_name,
                       start = start,
                       count = count)
     lats <- ncvar_get(nc = file,
-                      varid = "latitude",
+                      varid = lat_var_name,
                       start = start,
                       count = count)
   } else {
     lons <- ncvar_get(nc = file,
-                      varid = "longitude",
+                      varid = lon_var_name,
                       start = lon_start,
                       count = lon_count)
     lats <- ncvar_get(nc = file,
-                      varid = "latitude",
+                      varid = lat_var_name,
                       start = lat_start,
                       count = lat_count)
   }
@@ -159,6 +171,8 @@ get_future_sst <- function(filename,
   } else {
     res <- lon %>% sort() %>% diff() %>% unique() %>% head(1) %>% as.numeric()
   }
+  
+  res <- max(res, round(res))
   
   if(centered) {
     reference_raster <- raster(xmn = -119, xmx = -110,
@@ -220,16 +234,18 @@ get_future_sst <- function(filename,
                        y = reference_raster, 
                        field = data[, 3])
       
-      if(!res == 0.25) {
-        factors <- res / 0.25
-        
-        sst <- disaggregate(x = sst,
-                            fact = factors,
-                            method = "bilinear")
-      }
-      
       if(!centered) {
         sst <- rotate(sst)
+      }
+      
+      if(!res == 0.25) {
+        sst <- resample(x = sst,
+                        y = target_raster,
+                        method = "bilinear") %>% 
+          focal(w = matrix(1, nrow = 5, ncol = 5),
+                na.rm = T,
+                fun = "mean",) %>% 
+          mask(target_raster)
       }
       
       # And export it
@@ -241,11 +257,7 @@ get_future_sst <- function(filename,
     
     # END FOOR LOOP
   }
-  
   nc_close(file)
-  
-  # Notify user
-  print(paste0("Done with: ", filename))
 }
 # END FUNCTION
 
@@ -255,7 +267,10 @@ get_future_sst <- function(filename,
 safe_get_future_sst <- safely(get_future_sst)
 
 # Get data ---------------------------------------------------------------------
-files <- list.files(here::here("data", "raw", "climate_model_output"), recursive = T, pattern = "\\.nc$", full.names = T)
+files <- list.files(here::here("data", "raw", "climate_model_output"),
+                    recursive = T,
+                    pattern = "\\.nc$", 
+                    full.names = T)
 
 # Run inparallel
 walk(files, safe_get_future_sst)
