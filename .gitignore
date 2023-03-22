@@ -47,4 +47,4 @@ data/raw/climate_model_output/.
 data/raw/std_climate_model_output/.
 
 # Ignore powerpoint
-.pptx
+*.pptx
