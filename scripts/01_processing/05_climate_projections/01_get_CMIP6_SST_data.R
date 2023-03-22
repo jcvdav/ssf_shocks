@@ -73,12 +73,12 @@ get_future_sst <- function(filename,
   # Get filename info ---------------------------------------------------------------
   # Model name
   model <- str_remove_all(string = tools::file_path_sans_ext(basename(filename)),
-                          pattern = "tos_Oday_|_ssp[:digit:]{3}_.+")
+                          pattern = "tos_Oday_|_ssp[:digit:]{3}_.+|_historical_.+")
   
   # Scenario
-  ssp <- str_extract(filename, "ssp[:digit:]{3}")
+  ssp <- str_extract(filename, "ssp[:digit:]{3}|historical")
   
-  # Infer date start from filename
+  # Infer date start from filenames
   date_start <- ymd(str_sub(str_extract(string = filename,
                                         pattern = "_[:digit:]{8}-"),
                             start = 2,
@@ -156,14 +156,25 @@ get_future_sst <- function(filename,
   dates <- ncvar_get(nc = file,
                      varid = "time")
   
-  all_dates <- tibble(index = 1:length(dates),
-                      days_since_origin = dates) %>% 
+  all_dates <- tibble(days_since_origin = dates) %>% 
     mutate(diftime = (dates - min(dates)),
-           date = date_start + days(diftime),
-           is_feb_29 = (day(date) == 29 & month(date) == 2),
-           adds = cumsum(is_feb_29),
-           fixed_date = date + days(adds)) %>% 
-    filter(year(fixed_date) <= 2050) # I only want to project out to 2050
+           date = date_start + days(diftime))
+  
+  calendar_type <- ncatt_get(nc = file, varid = "time", attname = "calendar")$value
+  
+  # If it's a proleptic gregorian calendar we're good. Otherwise we need to adjust
+  # dates for the fact that CMIP projections don't include leap years
+  if(!calendar_type == "proleptic_gregorian") {
+    # Fixing leap year
+    all_dates <- all_dates %>%
+      mutate(is_feb_29 = (day(date) == 29 & month(date) == 2),
+             adds = cumsum(is_feb_29),
+             date = date + days(adds))
+  }
+  
+  all_dates <- all_dates %>% 
+    filter(between(year(date), 1982, 2050)) %>%  # I only want to project out to 2050
+    mutate(index = 1:nrow(.))
   
   # Create a reference raster --------------------------------------------------
   if(mat) {
@@ -194,7 +205,7 @@ get_future_sst <- function(filename,
     
     # Define output file name based on date
     out_file <- here(out_dir,
-                     paste0(all_dates$fixed_date[day], ".tif"))
+                     paste0(all_dates$date[day], ".tif"))
     
     if(!dir.exists(here(out_dir))) {
       
@@ -258,21 +269,37 @@ get_future_sst <- function(filename,
     # END FOOR LOOP
   }
   nc_close(file)
+  print(paste0("done with ", filename))
 }
 # END FUNCTION
 
 # Define URLS, models, and scenarios -------------------------------------------
 
 
-safe_get_future_sst <- safely(get_future_sst)
-
 # Get data ---------------------------------------------------------------------
 files <- list.files(here::here("data", "raw", "climate_model_output"),
                     recursive = T,
-                    pattern = "\\.nc$", 
+                    pattern = ".+\\.nc$", 
                     full.names = T)
 
 # Run inparallel
-walk(files, safe_get_future_sst)
+plan(multisession, workers = 5)
+future_walk(files, get_future_sst)
+plan(sequential)
+
+
+## NEED TO RE RUN TO GET HISTORICAL CMIP6.CMIP.BCC.BCC-CSM2-MR.historical.r1i1p1f1.Oday.tos.gn
 
 # DONE!
+tibble(files) %>%
+  mutate(model = str_remove_all(string = tools::file_path_sans_ext(basename(files)),
+                                pattern = "tos_Oday_|_ssp[:digit:]{3}_.+|_historical_.+"),
+         ssp = str_extract(files, "ssp[:digit:]{3}|historical")) %>% count(model, ssp) %>%
+  print(n = 50)
+# 
+# tibble(files) %>%
+#   mutate(model = str_remove_all(string = tools::file_path_sans_ext(basename(files)),
+#                                 pattern = "tos_Oday_|_ssp[:digit:]{3}_.+|_historical_.+"),
+#          ssp = str_extract(files, "ssp[:digit:]{3}|historical")) %>% count(model, ssp) %>% 
+#   group_by(model) %>% 
+#   summarize(n = sum(n))

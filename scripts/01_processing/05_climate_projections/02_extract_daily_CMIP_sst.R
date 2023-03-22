@@ -48,14 +48,15 @@ dirs <- list.files(path = here::here("data", "raw", "std_climate_model_output"),
   unique()
 
 sst_metadata <- tibble(dir = dirs) %>% 
-  mutate(ssp = str_extract(dir, pattern = "ssp[:digit:]{3}"),
-         model = str_remove(dir, "ssp[:digit:]{3}/")) %>% 
+  mutate(ssp = str_extract(dir, pattern = "ssp[:digit:]{3}|historical"),
+         model = str_remove(dir, "ssp[:digit:]{3}/|historical/")) %>% 
   select(ssp, model) %>% 
   distinct() %>% 
-  expand_grid(decade = c("201", "202", "203", "204", "205")) %>% 
+  expand_grid(decade = c("198", "199", "200", "201", "202", "203", "204", "205")) %>% 
   mutate(files = pmap(list(ssp, model, decade), my_files),
          name = map(files,
-                    ~basename(tools::file_path_sans_ext(.x))))
+                    ~basename(tools::file_path_sans_ext(.x)))) %>% 
+  filter(map_lgl(name, ~length(.x) > 0))
 
 print("Metadata done")
 
