@@ -24,8 +24,7 @@ library(tidyverse)
 
 # Load data --------------------------------------------------------------------
 data <- readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
-  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
-  filter(balanced)
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")))
 
 ## VISUALIZE ###################################################################
 

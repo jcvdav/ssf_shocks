@@ -48,6 +48,7 @@ coefplot <- function(fishery, data, model){
     xlab <- expression(hat(beta[fe]))
     
     plot_data <- broom::tidy(model) %>% 
+      filter(!str_detect(term, "year")) %>% 
       mutate(term = str_extract(term, "[:digit:]+")) %>% 
       left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
       mutate(term = fct_reorder(term, -estimate))  
@@ -100,7 +101,9 @@ coefplot <- function(fishery, data, model){
           legend.justification = c(0, 0))
   
   if(class(model) == "lmerMod") {
-    p <- p + geom_vline(xintercept = coef, linetype = "dashed", color = "red")
+    p <- p +
+      geom_vline(xintercept = coef,
+                 linetype = "dashed", color = "red")
   }
   
   # if(singular){
