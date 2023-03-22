@@ -37,6 +37,11 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
-*.tif
 
+# Raster files
+*.tif
 *.nc
+
+# Climate model output
+data/raw/climate_model_output/.
+data/raw/std_climate_model_output/.
