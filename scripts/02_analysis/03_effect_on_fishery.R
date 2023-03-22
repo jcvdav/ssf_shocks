@@ -36,8 +36,8 @@ models <- data %>%
       "norm_mhw_events"
     )
   ) %>% 
-  mutate(re_fml = paste0(dep, "~", indep, "+ (0 + ", indep, "| eu_rnpa)"),
-         fe_fml = paste0(dep, "~", "-1 +", indep, ":eu_rnpa")) %>% 
+  mutate(re_fml = paste0(dep, "~ year +", indep, "+ (0 + ", indep, "| eu_rnpa)"),
+         fe_fml = paste0(dep, "~", "-1 + year +", indep, ":eu_rnpa")) %>% 
   mutate(re_model = map2(.x = re_fml, .y = data, lmer),
          fe_model = map2(.x = fe_fml, .y = data,
                          .f = ~feols(fml = as.formula(.x),
