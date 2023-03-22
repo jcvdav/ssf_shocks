@@ -48,3 +48,5 @@ data/raw/std_climate_model_output/
 
 # Ignore powerpoint
 *.pptx
+
+data/processed/future_mhw_by_turf.rds
