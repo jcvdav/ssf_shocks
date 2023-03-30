@@ -51,24 +51,26 @@ coef_data <- models %>%
   left_join(centroids, by = c("fishery", "eu_rnpa")) %>% 
   left_join(hist_mean_t, by = c("fishery", "eu_rnpa")) %>% 
   left_join(depth_info, by = c("fishery", "eu_rnpa")) %>% 
-  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
-  mutate(img = here("data", "img", paste0(fishery, ".png")))
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")),
+         fishery = fct_relevel(fishery, c("Lobster", "Urchin", "Sea cucumber"))) %>% 
+  mutate(img = here("data", "img", paste0(fishery, ".png")),
+         p_fill = (p.value <= 0.05) * estimate)
 
 
 scatter_plot <- function(data, variable, lab, img = F) {
   p <- data %>% 
     ggplot(aes(x = {{variable}},
                y = estimate)) +
-    geom_hline(yintercept = 0, linetype = "dashed") + 
+    geom_hline(yintercept = 0) + 
     geom_errorbar(aes(ymin = estimate + std.error,
                       ymax = estimate - std.error),
                   width = 0) +
-    geom_point(aes(fill = estimate), shape = 21, size = 2) +
+    geom_point(aes(fill = p_fill), shape = 21, size = 2) +
     geom_smooth(method = "lm", linetype = "dashed", linewidth = 0.5, color = "black") +
-    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue") +
+    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue", midpoint = 0) +
     labs(x = lab,
-         y = expression(beta[fe])) +
-    guides(fill = guide_colorbar(title = expression(beta[fe]),
+         y = expression(hat(beta[i]))) +
+    guides(fill = guide_colorbar(title = expression(hat(beta[i])),
                                  frame.colour = "black",
                                  ticks.colour = "black",)) +
     theme(legend.position = c(0, 0),
@@ -80,10 +82,10 @@ scatter_plot <- function(data, variable, lab, img = F) {
     p <- p + 
       geom_image(data = select(data, fishery, img) %>% distinct(),
                  mapping = aes(image = img), 
-                 x = c(25.75, 28.25, 29.5),
-                 y = c(1, 0.2, 1),
+                 x = c(32, 32, 31.5),
+                 y = c(0.4, 0.3, 0.1),
                  inherit.aes = F,
-                 size = 0.2)
+                 size = 0.15)
   }
   
   return(p)
@@ -97,9 +99,11 @@ lat <- scatter_plot(coef_data, lat, "°Latitude (Centroid)", img = T) +
   theme(legend.position = "none")
 temp <- scatter_plot(coef_data, temp_long_term, "Long-term mean SST (°C)") +
   theme(legend.position = "none")
-temp_cv <- scatter_plot(coef_data, temp_cv, "CV SST")
+temp_cv <- scatter_plot(coef_data, temp_cv, "CV SST") +
+  theme(legend.position = c(0.3, 0),
+        legend.justification = c(1, 0))
 
-p <- plot_grid(lat, temp, temp_cv, ncol = 1, labels = "AUTO")
+p <- plot_grid(lat, temp_cv, ncol = 1, labels = "AUTO")
 
 # Others -----------------------------------------------------------------------
 scatter_plot(coef_data, depth, "Mean depth (m)")
@@ -119,4 +123,4 @@ coef_data %>%
 startR::lazy_ggsave(plot = p,
                     filename = "biophysical_vs_effect",
                     width = 20,
-                    height = 20)
+                    height = 14)

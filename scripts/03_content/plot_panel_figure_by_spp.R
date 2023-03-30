@@ -27,7 +27,7 @@ make_panel <- function(data){
   panel <- ggplot(data = data,
                   mapping = aes(x = norm_mhw_int_cumulative, y = norm_landed_weight)) + 
     geom_smooth(method = "lm", se = T, fullrange = T, color = "black", linetype = "dashed", linewidth = 0.5) +
-    geom_point(aes(fill = period_long), shape = 21, color = "black", size = 2) +
+    geom_point(aes(fill = period_long), shape = 21, color = "black", size = 1) +
     facet_wrap(~eu_rnpa, ncol = 4, scales = "free_y") +
     labs(x = "Standard normalized Cum. Int. (°C X days)",
          y = "Standard normalized landings",

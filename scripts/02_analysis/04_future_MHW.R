@@ -76,7 +76,10 @@ fishery_summary <- con_p_mhw_threshold_future %>%
   summarize(p_exceeds = mean(exceeds), .groups = "drop") %>% 
   ungroup() %>% 
   group_by(fishery, eu_rnpa, ssp) %>% 
-  summarize(mean = mean(p_exceeds))
+  summarize(mean = mean(p_exceeds)) %>% 
+  ungroup() %>% 
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")),
+         fishery = fct_relevel(fishery, c("Lobster", "Urchin", "Sea cucumber")))
 
 my_jitter <- position_jitterdodge(jitter.width = 0.1,
                                   jitter.height = 0,
@@ -85,7 +88,7 @@ my_jitter <- position_jitterdodge(jitter.width = 0.1,
 
 ggplot(fishery_summary,
        aes(x = fishery, y = mean, color = ssp, fill = ssp)) +
-  geom_hline(yintercept = 1/40) +
+  geom_hline(yintercept = 1/40, linetype = "dashed") +
   geom_point(aes(group = ssp),
              size = 1,
              alpha = 0.5,
@@ -101,8 +104,12 @@ ggplot(fishery_summary,
                linewidth = 2,
                position = my_jitter) +
   scale_color_manual(values = c("royalblue3", "orange2", "darkred")) +
+  theme(legend.position = c(0, 1),
+        legend.justification = c(0, 1)) +
   labs(x = "Fishery",
-       y = expression("P((Cum. Int. ">=bar(MHW~Cum.~Int.)[i]~") | MHW Occurs)"))
+       y = expression("P((Cum. Int. ">=bar(MHW~Cum.~Int.)[i]~") | MHW Occurs)"),
+       color = "SSP",
+       fill = "SSP")
 
 
 

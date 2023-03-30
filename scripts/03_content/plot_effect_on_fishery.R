@@ -45,13 +45,14 @@ coefplot <- function(fishery, data, model){
   # Build plotting data --------------------------------------------------------
   if(class(model) == "fixest") {
     
-    xlab <- expression(hat(beta[fe]))
+    xlab <- expression(hat(beta[i]))
     
     plot_data <- broom::tidy(model) %>% 
       filter(!str_detect(term, "year")) %>% 
-      mutate(term = str_extract(term, "[:digit:]+")) %>% 
+      mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
       left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
-      mutate(term = fct_reorder(term, -estimate))  
+      mutate(term = fct_reorder(term, -estimate),
+             p_fill = (p.value < 0.05) * estimate)  
   }
   
   if(class(model) == "lmerMod") {
@@ -85,20 +86,19 @@ coefplot <- function(fishery, data, model){
     geom_vline(xintercept = 0,
                linetype = "dashed",
                linewidth = 1) +
-    geom_pointrange(aes(fill = max_mhw_int_cumulative,
+    geom_pointrange(aes(fill = p_fill,
                         xmin = estimate - std.error,
                         xmax = estimate + std.error),
                     shape = 21) + 
-    scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
-                                                            type = "continuous")) +
+    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue", midpoint = 0) +
+    # scale_alpha_manual(values = c(0.5, 1)) +
     labs(title = title,
          x = xlab,
          y = NULL,
-         fill = expression(widehat(MHWCI)[max])) +
+         fill = xlab) +
     guides(fill = guide_colorbar(frame.colour = "black",
                                  ticks.colour = "black")) +
-    theme(legend.position = c(0, 0),
-          legend.justification = c(0, 0))
+    theme(legend.position = "None")
   
   if(class(model) == "lmerMod") {
     p <- p +
@@ -125,12 +125,14 @@ fe_land_mhw_cum_int <- fe_plots %>%
   filter(indep == "norm_mhw_int_cumulative") %$% 
   plot_grid(plotlist = plot, ncol = 3)
 
-re_plots <- models %>% 
-  arrange(indep) %>% 
-  mutate(plot = pmap(.l = list(fishery,
-                               data, 
-                               re_model),
-                     .f = coefplot))
+fe_land_mhw_cum_int
+
+# re_plots <- models %>% 
+#   arrange(indep) %>% 
+#   mutate(plot = pmap(.l = list(fishery,
+#                                data, 
+#                                re_model),
+#                      .f = coefplot))
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,

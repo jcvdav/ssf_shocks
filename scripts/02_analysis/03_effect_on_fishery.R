@@ -28,7 +28,7 @@ models <- data %>%
   group_by(fishery) %>%
   nest() %>% 
   expand_grid(
-    dep = c("norm_landed_weight"),
+    dep = c("log(landed_weight)"),
     indep = c(
       "norm_mhw_int_cumulative",
       "norm_temp_mean",

@@ -56,6 +56,13 @@ annual_mhw_panel <-
   mhw_by_turf %>%
   select(fishery, eu_rnpa, summary) %>%
   unnest(summary) %>% 
+  complete(year = 1982:2021,
+           nesting(fishery, eu_rnpa),
+           fill = list(mhw_events = 0,
+                       mhw_days = 0,
+                       mhw_int_mean = 0,
+                       mhw_int_max = 0,
+                       mhw_int_cumulative = 0)) %>% 
   group_by(eu_rnpa, fishery) %>% 
   mutate(mhw_events_lag = lag(mhw_events),
          mhw_days_lag = lag(mhw_days),
@@ -70,14 +77,14 @@ annual_env_panel <-
   left_join(annual_sst_panel,
             annual_mhw_panel,
             by = c("fishery", "eu_rnpa", "year")) %>%
-  replace_na(replace = list(
-    mhw_events = 0,
-    mhw_days = 0,
-    mhw_int_cumulative = 0,
-    norm_mhw_events = 0,
-    norm_mhw_days = 0,
-    norm_mhw_int_cumulative = 0
-  )) %>%
+  # replace_na(replace = list(
+  #   mhw_events = 0,
+  #   mhw_days = 0,
+  #   mhw_int_cumulative = 0,
+  #   norm_mhw_events = 0,
+  #   norm_mhw_days = 0,
+  #   norm_mhw_int_cumulative = 0
+  # )) %>%
   left_join(periods, by = "year") %>%
   select(fishery,
          eu_rnpa,

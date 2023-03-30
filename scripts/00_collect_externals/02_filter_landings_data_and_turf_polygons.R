@@ -38,8 +38,8 @@ eu_rnpas <- turf_polygons %>%
   bind_cols(st_coordinates(.)) %>% 
   sf::st_drop_geometry() %>% 
   filter(Y > 25) %>% # Filter polygons below 25 N
-  pull(eu_rnpa) %>% 
-  unique()
+  select(fishery, eu_rnpa) %>% 
+  distinct()
 
 # Define species I want --------------------------------------------------------
 spp <- c(
@@ -76,11 +76,11 @@ seasons <- expand_grid(main_species_group = spp,
 
 filtered_landings <- landings %>%
   inner_join(seasons, by = c("main_species_group", "month")) %>% 
-  filter(eu_rnpa %in% eu_rnpas) %>% 
   mutate(main_species_group = case_when(
     main_species_group == "LANGOSTA" ~ "lobster",
     main_species_group == "ERIZO" ~ "urchin",
-    main_species_group == "PEPINO DE MAR" ~ "sea_cucumber")) %>% 
+    main_species_group == "PEPINO DE MAR" ~ "sea_cucumber")) %>%
+  inner_join(eu_rnpas, by = c("main_species_group" = "fishery", "eu_rnpa")) %>% 
   mutate(year = ifelse(!within_year & month <= 2, year -1, year)) %>% 
   filter(year <= 2021) %>%
   group_by(year, eu_rnpa, main_species_group) %>% 
@@ -103,21 +103,26 @@ filtered_landings <- landings %>%
   ungroup() %>% 
   group_by(eu_rnpa, main_species_group) %>% 
   mutate(norm_landed_weight = (landed_weight - mean(landed_weight[year <= 2013])) / sd(landed_weight[year <= 2013]),
-         norm_value = (value - mean(value)) / sd(value)) %>%
+         norm_value = (value - mean(value)) / sd(value),
+         log_landed_weight = log(landed_weight),
+         norm_log_landed_weight = (log_landed_weight - mean(log_landed_weight[year <= 2013])) / sd(log_landed_weight[year <= 2013])) %>%
   ungroup() %>% 
   select(eu_rnpa,
          year,
          fishery = main_species_group,
          landed_weight, value,
-         norm_landed_weight, norm_value)
+         norm_landed_weight, norm_log_landed_weight, norm_value)
 
 # Filter TURF polygons ---------------------------------------------------------
 # We keep polygons that meet all the criteria for landings
 # Find the EU's that meet all the criteria for landings
-eu_rnpas_with_landings <- unique(filtered_landings$eu_rnpa)
+eu_rnpas_with_landings <- filtered_landings %>% 
+  select(fishery, eu_rnpa) %>% 
+  distinct()
 
 filtered_polygons <- turf_polygons %>% 
-  filter(eu_rnpa %in% eu_rnpas_with_landings)
+  drop_na(eu_rnpa) %>% 
+  inner_join(eu_rnpas_with_landings, by = c("eu_rnpa", "fishery"))
   
 ## EXPORT ######################################################################
 

@@ -48,8 +48,11 @@ mhw <- daily_sst_ts %>%
   nest(data = c(t, temp)) %>%
   mutate(
     ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31")),
+    # ts2 = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31"), pctile = 10),
     mhw = map(ts, detect_event),
-    summary = map(mhw, anual_intensity)
+    # cld = map(ts2, detect_event, coldSpells = T),
+    summary = map(mhw, anual_intensity)#,
+    # summary2 = map(cld, anual_intensity)
   )
 
 ## EXPORT ######################################################################

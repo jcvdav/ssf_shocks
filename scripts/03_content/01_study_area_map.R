@@ -14,6 +14,7 @@
 
 # Load packages ----------------------------------------------------------------
 library(sf)
+library(here)
 library(rnaturalearth)
 library(rmapshaper)
 library(cowplot)
