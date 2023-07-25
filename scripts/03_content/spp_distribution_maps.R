@@ -13,24 +13,28 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(raster)
-library(rnaturalearth)
-library(sf)
-library(tidyverse)
+pacman::p_load(
+  here,
+  terra,
+  rnaturalearth,
+  sf,
+  rmapshaper,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
-
-lob <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Panulirus_interruptus.tif")) 
+lob <- rast(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Panulirus_interruptus.tif")) 
 # red <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Mesocentrotus_franciscanus.tif")) 
-pur <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Strongylocentrotus_purpuratus.tif")) %>% 
+pur <- rast(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Strongylocentrotus_purpuratus.tif")) %>% 
   crop(lob)
-pep <- raster(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Parastichopus_parvimensis.tif")) %>% 
+pep <- rast(here("../dissertation/transferable_conservation/raw_data/thredds_aquamaps_rasters/Parastichopus_parvimensis.tif")) %>% 
   crop(lob)
-  
 
-img <- tibble(species = sort(unique(data$fishery)),
-              img = here("data", "img", paste0(species, ".png")))
+turfs <- st_read(here("data", "processed", "turf_polygons.gpkg")) %>% 
+  rmapshaper::ms_simplify(keep_shapes = T) %>% 
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
+  rename(species = fishery)
+  
 
 mex <- ne_countries(scale = "large", country = c("Mexico", "United States of America"), returnclass = "sf") %>% 
   st_crop(lob)
@@ -47,9 +51,11 @@ df <- list(lob, pur, pep) %>%
   # mutate(species = case_when(species == 1 ~ "P. interruptus",
                              # species == 2 ~ "S. purpuratus",
                              # species == 3 ~ "P. parvimensis")) %>% 
-  filter(#layer > 0.5,
-         y > 5) %>% 
+  filter(layer > 0.5) %>% 
   filter(between(y, 23, 35.5), between(x, -121, -111))
+
+img <- tibble(species = sort(unique(df$species)),
+              img = here("data", "img", paste0(species, ".png")))
 
 ## VISUALIZE ###################################################################
 
@@ -57,15 +63,17 @@ df <- list(lob, pur, pep) %>%
 
 maps <- ggplot() +
   geom_tile(data = df,
-            mapping = aes(x = x, y = y, fill = layer)) +
+            mapping = aes(x = x, y = y),
+            fill = "cadetblue") +
   geom_sf(data = mex) +
-  geom_image(data = img,
-             mapping = aes(x = -113, y = 34, image = img),
-             inherit.aes = F,
-             size = 0.2, by = "height") +
+  geom_sf(data = turfs) +
+  # geom_image(data = img,
+             # mapping = aes(x = -113, y = 34, image = img),
+             # inherit.aes = F,
+             # size = 0.2, by = "height") +
   geom_hline(yintercept = 25) +
   facet_wrap(~species) +
-  scale_fill_viridis_c(limits = c(0.5, 1), option = "B") +
+  # scale_fill_viridis_c(limits = c(0.5, 1), option = "B") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   # cowplot::theme_map() +

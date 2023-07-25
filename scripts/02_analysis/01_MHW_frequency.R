@@ -14,9 +14,10 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(furrr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 
@@ -36,6 +37,22 @@ p_mhw_occurs <- env_panel %>%
   group_by(eu_rnpa, fishery) %>% 
   summarize(p_at_least_one = mean(at_least_one_mhw)) %>% 
   ungroup()
+
+p_mhw_occurs %>% 
+  select(p_at_least_one) %>% 
+  summarize_all(function(x){paste0("Mean = ", round(mean(x), 3), "(SD = ", round(sd(x), 3), ")")})
+
+p_mhw_occurs %>%
+  select(fishery, p_at_least_one) %>% 
+  group_by(fishery) %>%
+  summarize_all(function(x){paste0("Mean = ", round(mean(x), 3), "(SD = ", round(sd(x), 3), ")")})
+
+
+between_fisheries <- p_mhw_occurs %>%
+  select(fishery, p_at_least_one)
+
+model <- lm(p_at_least_one ~ fishery, data = between_fisheries)
+car::Anova(model, type = "III")
 
 # P (MHW >= Threshold | MHW Occurs) --------------------------------------------
 # We ow calculate P((MHW ≥ Thershold) | MHW occurs): The probability that
@@ -74,9 +91,9 @@ con_p_mhw_threshold <- env_panel %>%
   select(eu_rnpa, fishery, mhw_int_cumulative) %>%
   nest(data = mhw_int_cumulative) %>% 
   expand_grid(threshold = seq(1, max_annual_int_cumulative, by = 5)) %>% 
-  mutate(cond_p = future_map2(.x = threshold,
-                              .y = data,
-                              .f = ~get_cond_p_cum_int(.x, .y))) %>% 
+  mutate(cond_p = map2(.x = threshold,
+                       .y = data,
+                       .f = ~get_cond_p_cum_int(.x, .y))) %>% 
   select(fishery, eu_rnpa, cond_p) %>%
   unnest(cond_p) %>% 
   filter(cond_p > 0)

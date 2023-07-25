@@ -13,33 +13,37 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(lme4)
-library(fixest)
-library(tidyverse)
+pacman::p_load(
+  here,
+  lme4,
+  fixest,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 data <-
-  readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds"))
-
+  readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
+  filter(!eu_rnpa == "0203127311") %>% 
+  mutate(bef = period %in% c("0", "1"))
 
 ## ESTIMATE ####################################################################
 models <- data %>% 
   group_by(fishery) %>%
   nest() %>% 
   expand_grid(
-    dep = c("log(landed_weight)"),
+    dep = c("norm_live_weight"),
     indep = c(
       "norm_mhw_int_cumulative",
-      "norm_temp_mean",
-      "norm_mhw_days",
-      "norm_mhw_events"
+      "norm_mhw_int_cumulative_lag",
+      "norm_mhw_int_cumulative_lag3"
+      # "norm_net_mhw",
+      # "norm_temp_mean",
+      # "norm_mhw_days",
+      # "norm_mhw_events"
     )
   ) %>% 
-  mutate(re_fml = paste0(dep, "~ year +", indep, "+ (0 + ", indep, "| eu_rnpa)"),
-         fe_fml = paste0(dep, "~", "-1 + year +", indep, ":eu_rnpa")) %>% 
-  mutate(re_model = map2(.x = re_fml, .y = data, lmer),
-         fe_model = map2(.x = fe_fml, .y = data,
+  mutate(fe_fml = paste0(dep, "~ year + ", indep, ":bef:eu_rnpa | eu_rnpa")) %>% 
+  mutate(fe_model = map2(.x = fe_fml, .y = data,
                          .f = ~feols(fml = as.formula(.x),
                                      data = .y,
                                      panel.id = ~eu_rnpa + year,

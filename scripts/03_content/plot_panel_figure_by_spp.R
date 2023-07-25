@@ -13,20 +13,27 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(magrittr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  magrittr,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 data <- readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
-  filter(balanced) %>% 
+  # filter(balanced) %>% 
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")))
 
 # Define a plotting function ---------------------------------------------------
 make_panel <- function(data){
   panel <- ggplot(data = data,
                   mapping = aes(x = norm_mhw_int_cumulative, y = norm_landed_weight)) + 
-    geom_smooth(method = "lm", se = T, fullrange = T, color = "black", linetype = "dashed", linewidth = 0.5) +
+    geom_smooth(method = "lm",
+                se = T,
+                fullrange = T,
+                color = "black",
+                linetype = "dashed",
+                linewidth = 0.5) +
     geom_point(aes(fill = period_long), shape = 21, color = "black", size = 1) +
     facet_wrap(~eu_rnpa, ncol = 4, scales = "free_y") +
     labs(x = "Standard normalized Cum. Int. (°C X days)",

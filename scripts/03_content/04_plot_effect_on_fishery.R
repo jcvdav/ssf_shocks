@@ -13,46 +13,47 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-# library(sf)
-library(lme4)
-library(ggimage)
-library(cowplot)
-library(broom)
-library(magrittr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  lme4,
+  cowplot,
+  broom,
+  magrittr,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 models <- readRDS(file = here("data", "output", "effect_on_fishery_models.rds"))
 
 # Define functions -------------------------------------------------------------
-coefplot <- function(fishery, data, model){
-  # browser()
+coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumulative:befTRUE"){
   
   # Get the title --------------------------------------------------------------
   title <- str_to_title(str_replace_all(fishery, "_", " "))
   
-  img <- ifelse(title == "Urchin",
-                here("data", "img", paste0(title, ".png")),
-                here("data", "img", paste0(title, "_90.png")))
-  
-  # Get the max MHW ------------------------------------------------------------
-  max_mhw <- data %>% 
-    group_by(eu_rnpa) %>% 
-    summarize(max_mhw_int_cumulative = max(norm_mhw_int_cumulative)) %>% 
-    ungroup()
+  critter <- ifelse(title == "Urchin",
+                    here("data", "img", paste0(title, ".png")),
+                    here("data", "img", paste0(title, "_90.png")))
   
   # Build plotting data --------------------------------------------------------
   if(class(model) == "fixest") {
     
     xlab <- expression(hat(beta[i]))
     
-    plot_data <- broom::tidy(model) %>% 
-      filter(!str_detect(term, "year")) %>% 
+    plot_data <- broom::tidy(model) 
+    
+    ref <- model %>% 
+      broom::tidy() %>%
+      filter(str_detect(term, pattern)) %>% 
+      pull(estimate) %>% 
+      mean()
+
+    plot_data <- plot_data %>% 
+      filter(str_detect(term, pattern)) %>%
       mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
-      left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
       mutate(term = fct_reorder(term, -estimate),
-             p_fill = (p.value < 0.05) * estimate)  
+             p_fill = p.value < 0.05)#estimate)
+      
   }
   
   if(class(model) == "lmerMod") {
@@ -78,27 +79,36 @@ coefplot <- function(fishery, data, model){
   p <- ggplot(data = plot_data,
               mapping = aes(x = estimate,
                             y = term)) +
-    geom_image(image = img,
-               x = 0.9 * max(plot_data$estimate),
-               y = 0.9 * length(unique(plot_data$term)),
-               inherit.aes = F,
-               size = 0.2) +
-    geom_vline(xintercept = 0,
-               linetype = "dashed",
-               linewidth = 1) +
-    geom_pointrange(aes(fill = p_fill,
+    # geom_image(image = img,
+    # x = 0.75,
+    # y = 0.9 * length(unique(plot_data$term)),
+    # inherit.aes = F,
+    # size = 0.2) +
+    geom_vline(xintercept = 0) +
+    geom_vline(xintercept = ref,
+               linetype = "dashed") +
+    geom_pointrange(aes(fill = estimate,
                         xmin = estimate - std.error,
                         xmax = estimate + std.error),
+                    color = "gray10",
                     shape = 21) + 
-    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue", midpoint = 0) +
-    # scale_alpha_manual(values = c(0.5, 1)) +
+    geom_point(aes(color = p_fill)) + 
+    scale_fill_gradient2(low = "#E41A1C",
+                         mid = "white",
+                         high = "steelblue",
+                         midpoint = 0) +
+    scale_color_manual(values = c("gray50", "transparent")) +
+    scale_x_continuous(limits = c(-0.5, 0.8)) +
     labs(title = title,
          x = xlab,
          y = NULL,
          fill = xlab) +
-    guides(fill = guide_colorbar(frame.colour = "black",
-                                 ticks.colour = "black")) +
-    theme(legend.position = "None")
+    guides(fill = guide_colorbar(title = expression(hat(beta[i])),
+                                 frame.colour = "black",
+                                 ticks.colour = "black"),
+           color = "none") +
+    theme(legend.position = c(0, 0),
+          legend.justification = c(0, 0))
   
   if(class(model) == "lmerMod") {
     p <- p +
@@ -110,35 +120,35 @@ coefplot <- function(fishery, data, model){
   #   p <- ggplot() + geom_text(x = 0, label = "ESTIMATION IS VOID")
   # }
   
+  p <- ggdraw() +
+    draw_plot(p) +
+    draw_image(critter,
+               scale = 0.2,
+               halign = 0.95,
+               valign = 0.925)
+  
   return(p)
 }
 
 ## VISUALIZE ###################################################################
 fe_plots <- models %>% 
+  filter(indep == "norm_mhw_int_cumulative") %>% 
   arrange(indep) %>%
   mutate(plot = pmap(.l = list(fishery,
-                               data, 
+                               data,
+                               indep,
                                fe_model),
-                     .f = coefplot))
+                     .f = coefplot,
+                     pattern = "norm_mhw_int_cumulative:befTRUE"))
 
-fe_land_mhw_cum_int <- fe_plots %>% 
-  filter(indep == "norm_mhw_int_cumulative") %$% 
+fe_land_mhw_cum_int <- fe_plots %$% 
   plot_grid(plotlist = plot, ncol = 3)
 
 fe_land_mhw_cum_int
 
-# re_plots <- models %>% 
-#   arrange(indep) %>% 
-#   mutate(plot = pmap(.l = list(fishery,
-#                                data, 
-#                                re_model),
-#                      .f = coefplot))
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
                     filename = "land_coef_plot",
                     width = 18,
-                    height = 10)
-
-
-# NEEd to order panels so that they are lobster, cucumber, urchin panels
+                    height = 12)

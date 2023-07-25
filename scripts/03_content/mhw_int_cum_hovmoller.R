@@ -13,12 +13,14 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(sf)
-library(ggimage)
-library(cowplot)
-library(magrittr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  sf,
+  ggimage,
+  cowplot,
+  magrittr,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 baseline <- readRDS(here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
@@ -43,8 +45,9 @@ vis_data <- env_panel %>%
   select(eu_rnpa, fishery, year, mhw_int_cumulative) %>% 
   distinct() %>% 
   left_join(centroids, by = c("fishery", "eu_rnpa")) %>% 
-  mutate(eu_rnpa = fct_reorder(eu_rnpa, lat),
-         fishery = str_to_sentence(str_replace(fishery, "_", " ")))
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")),
+         test = paste(eu_rnpa, str_sub(fishery, start = 1, end = 1), sep = "-"),
+         test = fct_reorder(test, lat))
 
 
 mhw_by_turf <- mhw_data %>% 
@@ -66,9 +69,11 @@ events_by_turf <- mhw_data %>%
 # X ----------------------------------------------------------------------------
 
 plot <- ggplot(data = vis_data,
-               mapping = aes(x = year, y = eu_rnpa, fill = mhw_int_cumulative)) +
+               mapping = aes(x = year,
+                             y = test,
+                             fill = mhw_int_cumulative)) +
   geom_tile() +
-  facet_wrap(~fishery, scales = "free") +
+  # facet_wrap(~fishery, scales = "free") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
                                                            type = "continuous")) +

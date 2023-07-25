@@ -13,12 +13,14 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(sf)
-library(here)
-library(rnaturalearth)
-library(rmapshaper)
-library(cowplot)
-library(tidyverse)
+pacman::p_load(
+  here,
+  sf,
+  rnaturalearth,
+  rmapshaper,
+  cowplot,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 turfs <-
@@ -89,7 +91,7 @@ map <- ggdraw() +
 
 startR::lazy_ggsave(
   plot = map,
-  filename = "focus_study_area",
+  filename = "01_study_area_map",
   width = 8,
   height = 10
 )

@@ -13,12 +13,14 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(lubridate)
-library(MBC)
-library(heatwaveR)
-library(furrr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  lubridate,
+  MBC,
+  heatwaveR,
+  furrr,
+  tidyverse
+)
 
 # Define processing funciton ---------------------------------------------------
 anual_intensity <- function(data) {

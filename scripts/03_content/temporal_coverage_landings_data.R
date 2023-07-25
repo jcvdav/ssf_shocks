@@ -13,8 +13,10 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(tidyverse)
+pacman::p_load(
+  here,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 dat <- readRDS(here("data", "processed", "annual_fishery_panel.rds")) 

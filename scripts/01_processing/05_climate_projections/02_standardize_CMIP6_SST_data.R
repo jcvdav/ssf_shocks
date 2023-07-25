@@ -23,8 +23,6 @@
 # Following approximately RCP4.5 global forcing pathway but with new forcing
 # based on SSP2. Concentration-driven
 
-# I am using: CMIP6.ScenarioMIP.NOAA-GFDL.GFDL-ESM4.ssp245.r1i1p1f1.Oday.tos.gr
-
 # ssp126 : Future scenario with low radiative forcing by the end of century.
 # Following approximately RCP2.6 global forcing pathway but with new forcing
 # based on SSP1. Concentration-driven. As a tier 2 option, this simulation
@@ -40,13 +38,15 @@
 
 ## SET UP ######################################################################
 # Load packages ----------------------------------------------------------------
-library(here)
-library(raster)
-library(ncdf4)
-library(lubridate)
-library(magrittr)
-library(furrr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  raster,
+  ncdf4,
+  lubridate,
+  magrittr,
+  furrr,
+  tidyverse
+)
 
 # Define a function to call ----------------------------------------------------
 get_future_sst <- function(filename,
