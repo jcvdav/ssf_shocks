@@ -37,3 +37,16 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Raster files
+*.tif
+*.nc
+
+# Climate model output
+data/raw/climate_model_output/
+data/raw/std_climate_model_output/
+
+# Ignore powerpoint
+*.pptx
+
+data/processed/future_mhw_by_turf.rds
