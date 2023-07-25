@@ -13,10 +13,11 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-
-library(here)
-library(sf)
-library(tidyverse)
+pacman::p_load(
+  here,
+  sf,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 turfs <- st_read(dsn = here("data",
@@ -35,3 +36,4 @@ centroids <- turfs %>%
 st_write(obj = centroids,
          dsn = here("data", "processed", "centroids.gpkg"),
          delete_dsn = TRUE)
+

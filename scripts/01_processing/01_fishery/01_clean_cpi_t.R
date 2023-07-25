@@ -14,9 +14,12 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(janitor)
-library(tidyverse)
+pacman::p_load(
+  here,
+  janitor,
+  lubridate,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 # Load CPI
@@ -37,7 +40,7 @@ cpi_2019 <- filter(cpi, date == "2019-01-01") %>%
 
 cpi_t <- cpi %>%
   mutate(rate = 1 + ((cpi_2019 - cpi) / cpi),                                   # multipleir = 1 +  ((baseline - unadjusted) / unadjusted)
-         year = lubridate::year(date)) %>%
+         year = year(date)) %>%
   select(year, rate)
 
 ## EXPORT ######################################################################
