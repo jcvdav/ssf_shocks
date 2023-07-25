@@ -6,16 +6,18 @@
 # juancvd@stanford.edu
 # date
 #
-# Description
+# RE RUN THIS ONCE YOU HAVE CLEANED THE COOPERATIVE NAMES
 #
 ################################################################################
 
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(sf)
-library(tidyverse)
+pacman::p_load(
+  here,
+  sf,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 env_panel <- readRDS(here("data", "processed", "annual_environmental_panel.rds"))
@@ -35,8 +37,8 @@ annual_env_fish_panel <- fish_panel %>%
   left_join(env_panel, by = c("year", "fishery", "eu_rnpa")) %>% 
   left_join(centroids, by = c("fishery", "eu_rnpa")) %>%
   mutate(value = value * rate) %>% 
-  select(-rate) %>% 
-  filter(lat > 25)
+  select(eu_rnpa, eu_name, year, fishery, everything()) %>% 
+  select(-rate)
 
 
 ## EXPORT ######################################################################
