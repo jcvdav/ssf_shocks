@@ -11,11 +11,13 @@
 ################################################################################
 
 ## SET UP ######################################################################
-
+# Missing polygon from SCPP Pescadores de la Poza: 0305000051, and the one north of them
 # Load packages ----------------------------------------------------------------
-library(here)
-library(sf)
-library(tidyverse)
+pacman::p_load(
+  here,
+  sf,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 # Landings data
@@ -38,7 +40,7 @@ eu_rnpas <- turf_polygons %>%
   bind_cols(st_coordinates(.)) %>% 
   sf::st_drop_geometry() %>% 
   filter(Y > 25) %>% # Filter polygons below 25 N
-  select(fishery, eu_rnpa) %>% 
+  select(fishery, eu_rnpa, eu_name) %>% 
   distinct()
 
 # Define species I want --------------------------------------------------------
@@ -48,9 +50,14 @@ spp <- c(
   "ERIZO"
 )
 
+# Define a CV function
+cv <- function(x, year, cutoff_year = 2013){
+  sd(x[year <= cutoff_year], na.rm = T) / mean(x[year <= cutoff_year], na.rm = T)
+}
+
 # Define fishing seasons -------------------------------------------------------
-# These com from the official NOMS
-# Lobster:
+# These com from the official NOMS https://www.dof.gob.mx/nota_detalle.php?codigo=5525712&fecha=11/06/2018#gsc.tab=0
+# Lobster: 
 # Cucumber:
 # Urchin: 
 seasons <- expand_grid(main_species_group = spp,
@@ -82,9 +89,10 @@ filtered_landings <- landings %>%
     main_species_group == "PEPINO DE MAR" ~ "sea_cucumber")) %>%
   inner_join(eu_rnpas, by = c("main_species_group" = "fishery", "eu_rnpa")) %>% 
   mutate(year = ifelse(!within_year & month <= 2, year -1, year)) %>% 
-  filter(year <= 2021) %>%
+  filter(year <= 2021,
+         year >= 2000) %>%
   group_by(year, eu_rnpa, main_species_group) %>% 
-  summarize(landed_weight = sum(landed_weight),
+  summarize(live_weight = sum(live_weight),
             value = sum(value)) %>% 
   left_join(periods, by = "year") %>% 
   mutate(ifelse(eu_rnpa == "0203002125", "0203126552", eu_rnpa)) %>% 
@@ -102,16 +110,17 @@ filtered_landings <- landings %>%
   filter(sum(year %in% c(2011, 2012, 2013)) == 3) %>% 
   ungroup() %>% 
   group_by(eu_rnpa, main_species_group) %>% 
-  mutate(norm_landed_weight = (landed_weight - mean(landed_weight[year <= 2013])) / sd(landed_weight[year <= 2013]),
+  mutate(norm_live_weight = (live_weight - mean(live_weight[year <= 2013])) / sd(live_weight[year <= 2013]),
          norm_value = (value - mean(value)) / sd(value),
-         log_landed_weight = log(landed_weight),
-         norm_log_landed_weight = (log_landed_weight - mean(log_landed_weight[year <= 2013])) / sd(log_landed_weight[year <= 2013])) %>%
+         live_weight_cv = cv(x = live_weight, year = year),
+         log_live_weight = log(live_weight),
+         norm_log_live_weight = (log_live_weight - mean(log_live_weight[year <= 2013])) / sd(log_live_weight[year <= 2013])) %>%
   ungroup() %>% 
   select(eu_rnpa,
          year,
          fishery = main_species_group,
-         landed_weight, value,
-         norm_landed_weight, norm_log_landed_weight, norm_value)
+         live_weight, value,
+         norm_live_weight, norm_log_live_weight, norm_value, live_weight_cv)
 
 # Filter TURF polygons ---------------------------------------------------------
 # We keep polygons that meet all the criteria for landings
