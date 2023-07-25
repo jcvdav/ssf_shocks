@@ -13,9 +13,11 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(readxl)
-library(tidyverse)
+pacman::p_load(
+  here,
+  readxl,
+  tidyverse
+)
 
 std_normal <- function(x, year, cutoff_year = 2013) {
   (x - mean(x[year <= cutoff_year], na.rm = T)) / sd(x[year <= cutoff_year], na.rm = T)
