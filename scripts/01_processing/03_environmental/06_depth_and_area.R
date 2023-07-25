@@ -13,29 +13,32 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(raster)
-library(exactextractr)
-library(sf)
-library(tidyverse)
+pacman::p_load(
+  here,
+  terra,
+  exactextractr,
+  sf,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 turfs <- st_read(dsn = here("data",
                             "processed",
                             "turf_polygons.gpkg"))
 
-bathymetry <- raster(here("data", "raw", "GEBCO_03_Feb_2023_58106760a1c2", "gebco_2022_n33.0_s23.0_w-119.0_e-110.0.tif"))
+bathymetry <- rast(here("data", "raw", "GEBCO_03_Feb_2023_58106760a1c2", "gebco_2022_n33.0_s23.0_w-119.0_e-110.0.tif"))
 
 ## PROCESSING ##################################################################
 
 # X ----------------------------------------------------------------------------
 bathymetry[bathymetry > 0] <- NA
 bathymetry <- -bathymetry
-area <- raster::area(bathymetry)
+area <- cellSize(bathymetry)
+volume <- bathymetry*area
 
 # X ----------------------------------------------------------------------------
-S <- stack(bathymetry, area)
-names(S) <- c("depth", "area")
+S <- c(bathymetry, area, volume)
+names(S) <- c("depth", "area", "volume")
 
 # X ----------------------------------------------------------------------------
 extracted <- exact_extract(x = S,
@@ -46,8 +49,8 @@ extracted <- exact_extract(x = S,
 
 # X ----------------------------------------------------------------------------
 calcs <- extracted %>% 
-  mutate(relative_volume = sum.depth / sum.area) %>% 
-  select(eu_rnpa, fishery, depth = sum.depth, area = sum.area, relative_volume)
+  mutate(relative_volume = sum.volume / sum.area) %>% 
+  select(eu_rnpa, fishery, depth = sum.depth, area = sum.area, volume = sum.volume, relative_volume)
 
 ## EXPORT ######################################################################
 

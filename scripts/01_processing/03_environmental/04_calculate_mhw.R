@@ -13,10 +13,12 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(lubridate)
-library(heatwaveR)
-library(tidyverse)
+pacman::p_load(
+  here,
+  lubridate,
+  heatwaveR,
+  tidyverse
+)
 
 # Define processing funciton ---------------------------------------------------
 anual_intensity <- function(data) {
@@ -36,6 +38,15 @@ anual_intensity <- function(data) {
     )
 }
 
+combine_hw_cs <- function(hw, cs) {
+  net <- bind_rows(hw, cs) %>% 
+    select(year, mhw_int_cumulative) %>% 
+    group_by(year) %>% 
+    summarize(net_mhw = sum(mhw_int_cumulative))
+  
+  full_join(hw, net, by = "year")
+}
+
 # Load data --------------------------------------------------------------------
 daily_sst_ts <-
   readRDS(file = here("data", "processed", "daily_mean_sst_by_turf.rds"))
@@ -48,11 +59,12 @@ mhw <- daily_sst_ts %>%
   nest(data = c(t, temp)) %>%
   mutate(
     ts = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31")),
-    # ts2 = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31"), pctile = 10),
+    ts2 = map(data, ts2clm, climatologyPeriod = c("1982-01-01", "2012-12-31"), pctile = 10),
     mhw = map(ts, detect_event),
-    # cld = map(ts2, detect_event, coldSpells = T),
-    summary = map(mhw, anual_intensity)#,
-    # summary2 = map(cld, anual_intensity)
+    cld = map(ts2, detect_event, coldSpells = T),
+    summary = map(mhw, anual_intensity),
+    summary2 = map(cld, anual_intensity),
+    summary = map2(summary, summary2, combine_hw_cs)
   )
 
 ## EXPORT ######################################################################

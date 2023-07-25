@@ -13,12 +13,14 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(terra)
-library(sf)
-library(exactextractr)
-library(lubridate)
-library(tidyverse)
+pacman::p_load(
+  here,
+  terra,
+  sf,
+  exactextractr,
+  lubridate,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 

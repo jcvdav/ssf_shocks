@@ -20,10 +20,12 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(rerddap)
-library(lubridate)
-library(tidyverse)
+pacman::p_load(
+  here,
+  rerddap,
+  lubridate,
+  tidyverse
+)
 
 # Define a function to download data -------------------------------------------
 OISST_sub_dl <- function(time_df) {

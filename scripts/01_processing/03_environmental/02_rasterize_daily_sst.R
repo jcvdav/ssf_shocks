@@ -13,11 +13,14 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(raster)
-library(magrittr)
-library(furrr)
-library(tidyverse)
+pacman::p_load(
+  here,
+  # raster,
+  terra,
+  magrittr,
+  furrr,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 OISST_data <-
@@ -31,7 +34,8 @@ plan("multisession", workers = 12)
 rasters <- OISST_data %>%
   group_by(t) %>%
   nest() %>%
-  mutate(r = future_map(data, rasterFromXYZ, crs = "EPSG:4326"))
+  head() %>% 
+  mutate(r = future_map(data, rast, type = "xyz", crs = "EPSG:4326"))
 
 ## EXPORT ######################################################################
 

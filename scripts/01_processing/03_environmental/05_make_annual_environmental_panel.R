@@ -14,9 +14,11 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-library(here)
-library(lubridate)
-library(tidyverse)
+pacman::p_load(
+  here,
+  lubridate,
+  tidyverse
+)
 
 # Load data --------------------------------------------------------------------
 mhw_by_turf <- readRDS(here("data", "processed", "mhw_by_turf.rds"))
@@ -62,14 +64,17 @@ annual_mhw_panel <-
                        mhw_days = 0,
                        mhw_int_mean = 0,
                        mhw_int_max = 0,
-                       mhw_int_cumulative = 0)) %>% 
+                       mhw_int_cumulative = 0,
+                       net_mhw = 0)) %>% 
   group_by(eu_rnpa, fishery) %>% 
-  mutate(mhw_events_lag = lag(mhw_events),
-         mhw_days_lag = lag(mhw_days),
-         mhw_int_cumulative_lag = lag(mhw_int_cumulative),
+  mutate(mhw_int_cumulative_lag = lag(x = mhw_int_cumulative),
+         mhw_int_cumulative_lag3 = lag(x = mhw_int_cumulative, n = 3),
          norm_mhw_events = std_normal(mhw_events, year),
          norm_mhw_days = std_normal(mhw_days, year),
-         norm_mhw_int_cumulative = std_normal(mhw_int_cumulative, year)) %>% 
+         norm_mhw_int_cumulative = std_normal(mhw_int_cumulative, year),
+         norm_mhw_int_cumulative_lag = std_normal(mhw_int_cumulative_lag, year),
+         norm_mhw_int_cumulative_lag3 = std_normal(mhw_int_cumulative_lag3, year),
+         norm_net_mhw = std_normal(net_mhw, year)) %>% 
   ungroup()
 
 # X ----------------------------------------------------------------------------
@@ -77,14 +82,6 @@ annual_env_panel <-
   left_join(annual_sst_panel,
             annual_mhw_panel,
             by = c("fishery", "eu_rnpa", "year")) %>%
-  # replace_na(replace = list(
-  #   mhw_events = 0,
-  #   mhw_days = 0,
-  #   mhw_int_cumulative = 0,
-  #   norm_mhw_events = 0,
-  #   norm_mhw_days = 0,
-  #   norm_mhw_int_cumulative = 0
-  # )) %>%
   left_join(periods, by = "year") %>%
   select(fishery,
          eu_rnpa,
