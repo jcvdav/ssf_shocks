@@ -19,27 +19,17 @@ pacman::p_load(
 )
 
 # Load data --------------------------------------------------------------------
-mhw <- readRDS(file = here("data", "processed", "mhw_by_turf.rds"))
-
-# Mean stats for the regime
-mhw %>% 
-  select(eu_rnpa, summary) %>% 
-  unnest(summary) %>% 
-  select(-eu_rnpa) %>%
-  filter(between(year, 2014, 2016)) %>% 
-  # group_by(year) %>% 
-  summarize_all(function(x){paste0(round(mean(x), 3), "; ", round(sd(x), 3))})
+mhw <- readRDS(file = here("data", "processed", "annual_environmental_panel.rds"))
 
 # How does the regime compare to historical MHWs?
 comp <- mhw %>% 
-  select(eu_rnpa, fishery, summary) %>% 
-  unnest(summary) %>% 
-  filter(year <= 2016) %>% 
-  left_join(periods, by = "year")
+  filter(year <= 2016,
+         mhw_events > 0)
 
 comp %>% 
-  select(-c(year, eu_rnpa, fishery, period)) %>% 
+  select(-c(year, eu_rnpa, fishery, period, contains("temp_"))) %>% 
   group_by(period_long) %>% 
-  summarize_all(function(x){paste0(round(mean(x, na.rm = T), 3), "; ", round(sd(x, na.rm = T), 3))})
+  summarize_all(function(x){paste0(round(mean(x, na.rm = T), 2), "(", round(sd(x, na.rm = T), 2), ")")})
 
 t.test(mhw_int_cumulative ~ period_long, data = comp, alternative = "less")
+t.test(log(mhw_int_cumulative) ~ period_long, data = comp, alternative = "less")

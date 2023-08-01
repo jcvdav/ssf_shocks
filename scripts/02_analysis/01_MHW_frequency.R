@@ -40,7 +40,7 @@ p_mhw_occurs <- env_panel %>%
 
 p_mhw_occurs %>% 
   select(p_at_least_one) %>% 
-  summarize_all(function(x){paste0("Mean = ", round(mean(x), 3), "(SD = ", round(sd(x), 3), ")")})
+  summarize_all(function(x){paste0("Mean = ", round(mean(x * 100), 2), "(SD = ", round(sd(x * 100), 2), ")")})
 
 p_mhw_occurs %>%
   select(fishery, p_at_least_one) %>% 
