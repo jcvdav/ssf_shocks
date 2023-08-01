@@ -1,5 +1,7 @@
 source("renv/activate.R")
 
+if(!require(pacman)) {install.packages("pacman")}
+
 periods <- dplyr::tibble(year = 1980:2022,
                          period = dplyr::case_when(year <= 2013 ~ "0",
                                             dplyr::between(year, 2014, 2016) ~ "1",
@@ -10,7 +12,8 @@ periods <- dplyr::tibble(year = 1980:2022,
   dplyr::mutate(period_long = forcats::fct_reorder(period_long, year))
 
 
-period_palette <- c("steelblue", "#E41A1C", "darkorange1", "cadetblue")
+period_palette_old <- c("steelblue", "#E41A1C", "darkorange1", "cadetblue")
+period_palette <- c("#4cacba", "#f22300", "#e1af00")
 
 ihs <- function(x){
   log(x + sqrt((x ^ 2) + 1))
