@@ -13,7 +13,7 @@
 ## SET UP ######################################################################
 
 # Load packages ----------------------------------------------------------------
-pacman::p_pload(
+pacman::p_load(
   here,
   cowplot,
   tidyverse
@@ -34,33 +34,33 @@ critter <- c("data/img/Lobster_90.png",
 
 total_data <- data %>%
   group_by(period, period_long, year, fishery) %>%
-  summarize(landed_weight = sum(landed_weight),
+  summarize(live_weight = sum(live_weight),
             n = n_distinct(eu_rnpa),
-            norm_landed_weight = landed_weight / n) %>%
+            norm_live_weight = live_weight / n) %>%
   group_by(period, period_long, fishery) %>% 
-  mutate(period_mean = mean(norm_landed_weight),
-         period_sd = sd(norm_landed_weight))
+  mutate(period_mean = mean(norm_live_weight),
+         period_sd = sd(norm_live_weight))
 
 period_data <- data %>%
   group_by(period, period_long, year, fishery) %>%
-  summarize(landed_weight = sum(landed_weight),
+  summarize(live_weight = sum(live_weight),
             n = n_distinct(eu_rnpa),
-            norm_landed_weight = landed_weight / n) %>%
+            norm_live_weight = live_weight / n) %>%
   group_by(period, period_long, fishery) %>% 
-  summarize(period_mean = mean(norm_landed_weight),
-            period_sd = sd(norm_landed_weight)) 
+  summarize(period_mean = mean(norm_live_weight),
+            period_sd = sd(norm_live_weight)) 
 
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
 landings_ts <- ggplot(data = data,
                       mapping = aes(x = year,
-                                    y = norm_landed_weight)) +
+                                    y = norm_live_weight)) +
   geom_rect(xmin= 2013.5, xmax = 2016.5,
             ymin = -100, ymax = 500, fill = "gray", alpha = 0.5) +
   geom_line(aes(group = eu_rnpa),
             linewidth = 0.2,
-            color = "cadetblue") +
+            color = "#016895") +
   labs(x = "Year",
        y = "Standardized\nlandings",
        color = "Cooperative") +
@@ -69,18 +69,24 @@ landings_ts <- ggplot(data = data,
 
 total_landings_ts <- ggplot(data = total_data,
                             aes(x = year,
-                                y = norm_landed_weight / 1e3)) +
+                                y = norm_live_weight / 1e3)) +
   geom_rect(xmin= 2013.5, xmax = 2016.5,
             ymin = 0, ymax = Inf, fill = "gray", alpha = 0.5) +
+  geom_ribbon(aes(x = year,
+                  ymin = (period_mean - period_sd) / 1e3,
+                  ymax = (period_mean + period_sd) / 1e3,
+                  group = period_long,
+                  fill = period_long),
+              alpha = 0.25) +
+  geom_line(aes(x = year,
+                y = period_mean / 1e3,
+                group = period_long,
+                color = period_long)) +
   geom_line(color = "gray10") +
   geom_point(aes(fill = period_long),
              shape = 21,
              color = "gray10") +
-  geom_line(aes(x = year,
-                y = period_mean / 1e3,
-                group = period_mean,
-                color = period_long)) +
-  scale_x_continuous(expand = c(0, 0)) +
+    scale_x_continuous(expand = c(0, 0)) +
   scale_fill_manual(values = period_palette) +
   scale_color_manual(values = period_palette) +
   facet_wrap(~fishery, ncol = 1, scales = "free_y") +
@@ -90,8 +96,8 @@ total_landings_ts <- ggplot(data = total_data,
   theme(legend.position = "bottom")
 
 combined <- plot_grid(total_landings_ts +
-                 theme(legend.position = "None"),
-               landings_ts,
+                         theme(legend.position = "None"),
+                       landings_ts,
                ncol = 2,
                labels = "AUTO")
 
@@ -103,7 +109,7 @@ p <- ggdraw() +
   draw_image(critter[1],
              scale = scale,
              halign = halign,
-             valign = 0.92) +
+             valign = 0.85) +
   draw_image(critter[2],
              scale = scale,
              halign = halign,
@@ -135,9 +141,9 @@ period_bars <- ggplot(data = period_data,
 
 library(car)
 
-# bartlett.test(norm_landed_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
+# bartlett.test(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
 
-linear_mod <- lm(norm_landed_weight ~ period_long, data = total_data %>% filter(fishery == "Urchin"),
+linear_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Urchin"),
                  contrasts=list(period_long=contr.sum))
 Anova(mod = linear_mod,
       type = 3)

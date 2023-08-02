@@ -94,7 +94,7 @@ p_at_least_one <- ggplot(
                fatten = 4,
                linewidth = 2,
                position = my_jitter) +
-  scale_color_manual(values = c("black", period_palette)) +
+  scale_color_manual(values = c("black", ssp_palette)) +
   guides(color = guide_legend(ncol = 2)) +
   labs(x = "Fishery",
        y = "P(MHW Occurs)",
@@ -123,7 +123,7 @@ p_as_big <- ggplot(data = con_p_mhw_threshold_future ,
                fatten = 4,
                linewidth = 2,
                position = my_jitter) +
-  scale_color_manual(values = period_palette) +
+  scale_color_manual(values = ssp_palette) +
   guides(color = guide_legend(ncol = 2)) +
   labs(x = "Fishery",
        y = expression("P((Cum. Int. ">=MHW~Cum.~Int.[i]~") | MHW Occurs)"),
