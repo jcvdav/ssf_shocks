@@ -25,10 +25,13 @@ env_panel <- readRDS(here("data", "processed", "annual_environmental_panel.rds")
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
-pdf(file = here("results", "img", "corrplot.pdf"), width = 5, height = 5)
+pdf(file = here("results", "img", "fig_Sx_corrplot.pdf"),
+    width = 5,
+    height = 5)
 
 env_panel %>% 
   select(temp_max, mhw_int_max, mhw_events, mhw_days, mhw_int_cumulative) %>% 
+  magrittr::set_names(str_replace(str_to_title(str_replace_all(colnames(.), "_", " ")), "Mhw", "MHW")) %>% 
   cor() %>% 
   corrplot(method = "ellipse", 
            type = "lower",
