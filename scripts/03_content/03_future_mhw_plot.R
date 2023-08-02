@@ -62,7 +62,10 @@ p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
                           # p_mhw_occurs_hindcast,
                           p_mhw_occurs_future) %>% 
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")),
-         fishery = fct_relevel(fishery, c("Lobster", "Urchin", "Sea cucumber")))
+         fishery = fct_relevel(fishery, c("Lobster", "Urchin", "Sea cucumber")),
+         ssp = ifelse(str_detect(ssp, "ssp"),
+                      str_to_upper(ssp),
+                      str_to_sentence(ssp)))
 
 ## VISUALIZE ###################################################################
 
@@ -91,12 +94,13 @@ p_at_least_one <- ggplot(
                fatten = 4,
                linewidth = 2,
                position = my_jitter) +
-  scale_color_manual(values = c("black", "royalblue3",
-                                "orange2", "darkred")) +
+  scale_color_manual(values = c("black", period_palette)) +
   guides(color = guide_legend(ncol = 2)) +
   labs(x = "Fishery",
-       y = "P(MHW Occurs)") +
-  lims(y = c(0, 1)) +
+       y = "P(MHW Occurs)",
+       fill = "Scenario",
+       color = "Scenario") +
+  lims(y = c(0.5, 1)) +
   theme(legend.position = c(1, 0),
         legend.justification = c(1, 0))
 
@@ -119,13 +123,13 @@ p_as_big <- ggplot(data = con_p_mhw_threshold_future ,
                fatten = 4,
                linewidth = 2,
                position = my_jitter) +
-  scale_color_manual(values = c("royalblue3", "orange2", "darkred")) +
+  scale_color_manual(values = period_palette) +
+  guides(color = guide_legend(ncol = 2)) +
   labs(x = "Fishery",
        y = expression("P((Cum. Int. ">=MHW~Cum.~Int.[i]~") | MHW Occurs)"),
        color = "Scenario",
        fill = "Scenario") +
-  theme(legend.justification = c(0, 1),
-        legend.position = c(0, 1))
+  theme(legend.position = "None")
 
 cond_p_past <- ggplot(data = con_p_mhw_threshold_past, 
              mapping = aes(x = threshold, y = cond_p)) +
@@ -140,43 +144,28 @@ cond_p_past <- ggplot(data = con_p_mhw_threshold_past,
                fun = "mean",
                linewidth = 0.5) +
   facet_wrap(~fishery, ncol = 1) +
-  labs(x = "MHW Cum. Int.\n(°C x days)",
+  labs(x = "MHW Cum. Int. (°C days)",
        y = expression("P((Cum. Int. ">=~" X) | MHW Occurs)"))
 
 
 p1 <- plot_grid(p_at_least_one,
                 p_as_big,
                 ncol = 1,
-                labels = "auto")
+                labels = "auto",
+                label_x = 0.9)
 
 
 
 p_mhw_plot <- cowplot::plot_grid(p1, cond_p_past,
                                  ncol = 2,
-                                 labels = c("", "c"))
+                                 labels = c("", "c"),
+                                 label_x = 0.9)
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p_mhw_plot,
-                    filename = "p_mhw_plot",
+                    filename = "03_future_mhw_plot",
                     width = 18,
                     height = 12)
 
-
-
-daily_sst_ts %>%
-  filter(eu_rnpa == "0305000101") %>%
-  mutate(day = lubridate::yday(t),
-         year = lubridate::year(t),
-         colored = ifelse(year %in% c(2014:2016),
-                          as.character(year),
-                          NA)) %>%
-  ggplot(aes(x = day, y = temp)) +
-  geom_line(aes(linewidth = year %in% c(2014:2016),
-                group = year,
-                color = colored),
-            linewidth = 0.1) +
-  stat_summary(geom = "ribbon",
-               fun.data = mean_cl_normal,
-               color = "red", alpha = 0.5)
