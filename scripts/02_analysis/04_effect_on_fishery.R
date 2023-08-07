@@ -36,10 +36,6 @@ models <- data %>%
       "norm_mhw_int_cumulative",
       "norm_mhw_int_cumulative_lag",
       "norm_mhw_int_cumulative_lag3"
-      # "norm_net_mhw",
-      # "norm_temp_mean",
-      # "norm_mhw_days",
-      # "norm_mhw_events"
     )
   ) %>% 
   mutate(fe_fml = paste0(dep, "~ year + ", indep, ":bef:eu_rnpa | eu_rnpa")) %>% 
