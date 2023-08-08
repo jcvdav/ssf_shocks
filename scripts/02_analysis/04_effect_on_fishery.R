@@ -15,7 +15,6 @@
 # Load packages ----------------------------------------------------------------
 pacman::p_load(
   here,
-  lme4,
   fixest,
   tidyverse
 )

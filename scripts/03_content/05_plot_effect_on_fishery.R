@@ -15,7 +15,6 @@
 # Load packages ----------------------------------------------------------------
 pacman::p_load(
   here,
-  lme4,
   cowplot,
   broom,
   magrittr,
@@ -40,44 +39,21 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                          fishery == "urchin" ~ 24)
   
   # Build plotting data --------------------------------------------------------
-  if(class(model) == "fixest") {
-    
-    xlab <- expression(hat(beta[i]))
-    
-    plot_data <- broom::tidy(model) 
-    
-    ref <- model %>% 
-      broom::tidy() %>%
-      filter(str_detect(term, pattern)) %>% 
-      pull(estimate) %>% 
-      mean()
-
-    plot_data <- plot_data %>% 
-      filter(str_detect(term, pattern)) %>%
-      mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
-      mutate(term = fct_reorder(term, -estimate),
-             p_fill = p.value < 0.05)#estimate)
-      
-  }
+  xlab <- expression(hat(beta[i]))
   
-  if(class(model) == "lmerMod") {
-    
-    xlab <- expression(beta[re])
-    singular <- isSingular(model)
-    
-    coef <- fixef(model)[2]
-    vars <- model %>% vcov() %>% diag()
-    sd <- sqrt(vars[2])
-    
-    plot_data <- model %>%
-      ranef() %>% 
-      as_tibble() %>%
-      filter(str_detect(term, "temp|mhw")) %>% 
-      mutate(estimate = coef + condval) %>% 
-      select(term = grp, estimate, std.error = condsd) %>% 
-      left_join(max_mhw, by = c("term" = "eu_rnpa")) %>% 
-      mutate(term = fct_reorder(term, -estimate))  
-  }
+  plot_data <- broom::tidy(model) 
+  
+  ref <- model %>% 
+    broom::tidy() %>%
+    filter(str_detect(term, pattern)) %>% 
+    pull(estimate) %>% 
+    mean()
+  
+  plot_data <- plot_data %>% 
+    filter(str_detect(term, pattern)) %>%
+    mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
+    mutate(term = fct_reorder(term, -estimate),
+           p_fill = p.value < 0.05)#estimate)
   
   # Build the plot -------------------------------------------------------------
   p <- ggplot(data = plot_data,

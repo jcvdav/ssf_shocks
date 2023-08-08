@@ -26,7 +26,8 @@ pacman::p_load(
 
 # Load data --------------------------------------------------------------------
 data <- readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
-  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")))
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
+  filter(!eu_rnpa == "0203127311")
 
 critter <- c("data/img/Lobster_90.png",
              "data/img/Sea cucumber_90.png",
@@ -86,7 +87,6 @@ total_landings_ts <- ggplot(data = total_data,
   geom_line(color = "gray10") +
   geom_point(aes(fill = period_long),
              color = "gray10") +
-    scale_x_continuous(expand = c(0, 0)) +
   scale_fill_manual(values = period_palette) +
   scale_color_manual(values = period_palette) +
   scale_shape_manual(values = c(21, 22, 24)) +
@@ -147,11 +147,17 @@ library(car)
 
 # bartlett.test(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
 
-linear_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Urchin"),
-                 contrasts=list(period_long=contr.sum))
-Anova(mod = linear_mod,
-      type = 3)
-TukeyHSD(aov(linear_mod))
+lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
+Anova(mod = lob_mod, type = "II", white.adjust = TRUE)
+
+cuc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
+Anova(mod = cuc_mod, type = "II", white.adjust = TRUE)
+TukeyHSD(aov(cuc_mod))
+
+urc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Urchin"))
+Anova(mod = urc_mod, type = "II", white.adjust = TRUE)
+TukeyHSD(aov(urc_mod))
+
 ## EXPORT ######################################################################
 
 
