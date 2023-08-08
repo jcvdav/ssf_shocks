@@ -73,8 +73,9 @@ p_mhw_occurs_hindcast <- data %>%
 references <- env_panel %>% 
   filter(period == 1) %>% 
   group_by(fishery, eu_rnpa) %>% 
-  summarize(mean = mean(mhw_int_cumulative),
-            max = max(mhw_int_cumulative))
+  filter(mhw_int_cumulative == max(mhw_int_cumulative, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(fishery, eu_rnpa, year, max = mhw_int_cumulative)
 
 con_p_mhw_threshold_future <- future_mhw %>% 
   select(model, ssp, eu_rnpa, fishery, summary) %>%
@@ -99,3 +100,6 @@ saveRDS(object = p_mhw_occurs_hindcast,
 
 saveRDS(object = con_p_mhw_threshold_future,
         file = here("data", "output", "con_p_mhw_threshold_future.rds"))
+
+saveRDS(object = references,
+        file = here("data", "output", "reference_mhw_by_TURF.rds"))

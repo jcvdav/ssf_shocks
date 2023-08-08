@@ -39,17 +39,6 @@ centroids <- st_read(dsn = here("data", "processed", "centroids.gpkg")) %>%
          lat = Y)
 
 ## PROCESSING ##################################################################
-p_mhw_occurs_future %>% 
-  select(ssp, p_at_least_one) %>% 
-  group_by(ssp) %>% 
-  summarize_all(function(x){paste0(round(mean(x, na.rm = T), 3), "; ", round(sd(x, na.rm = T), 3))})
-
-con_p_mhw_threshold_future %>% 
-  select(ssp, mean) %>% 
-  group_by(ssp) %>% 
-  summarize_all(function(x){paste0(round(mean(x, na.rm = T), 3), "; ", round(sd(x, na.rm = T), 3))})
-
-
 # X ----------------------------------------------------------------------------
 p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
                           p_mhw_occurs_future) %>% 
@@ -59,6 +48,35 @@ p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
                          ssp == "ssp245" ~ "SSP2-4.5",
                          ssp == "ssp585" ~ "SSP5-8.5",
                          T ~ "Historical"))
+
+# Test whether there are diffrences between SSP and Historical
+model <- lm(p_at_least_one ~ fishery + ssp, data = p_mhw_occurs)
+
+car::Anova(model, type = "II", white.adjust = TRUE)
+
+TukeyHSD(aov(model)) %>% 
+  as.list() %>% 
+  map_dfr(~as_tibble(.x, rownames = "group"), .id = "source") %>% 
+  janitor::clean_names() %>% 
+  select(-c(4, 5)) %>% 
+  knitr::kable() %>%
+  kableExtra::collapse_rows(columns = 1) %>%
+  kableExtra::kable_styling()
+
+
+# Test whetehr there are differences between SSPs
+model <- lm(mean ~ fishery + ssp, data = con_p_mhw_threshold_future)
+
+car::Anova(model, type = "II", white.adjust = TRUE)
+
+TukeyHSD(aov(model)) %>% 
+  as.list() %>% 
+  map_dfr(~as_tibble(.x, rownames = "group"), .id = "source") %>% 
+  janitor::clean_names() %>% 
+  select(-c(4, 5)) %>% 
+  knitr::kable() %>%
+  kableExtra::collapse_rows(columns = 1) %>%
+  kableExtra::kable_styling()
 
 # X ----------------------------------------------------------------------------
 change_in_p <- bind_rows(p_mhw_occurs_past,
@@ -116,7 +134,7 @@ p_at_least_one <- ggplot(
   scale_shape_manual(values = c(21, 22, 24)) +
   guides(color = guide_legend(ncol = 2,
                               override.aes=list(shape = 21,
-                                                size = 1.1)),
+                                                size = 0.9)),
          shape = "none") +
   labs(x = "Fishery",
        y = "P(MHW Occurs)",
@@ -183,14 +201,14 @@ delta_p <- ggplot(change_in_p,
 p1 <- plot_grid(p_at_least_one,
                 p_as_big,
                 ncol = 1,
-                labels = "auto",
+                labels = c("a", "c"),
                 label_x = 0.9)
 
 p2 <- plot_grid(p1,
           delta_p,
           ncol = 2,
           rel_widths = c(1, 1.5),
-          labels = c("", "c"),
+          labels = c("", "b"),
           label_x = 0.9)
 
 ## EXPORT ######################################################################
@@ -198,8 +216,8 @@ p2 <- plot_grid(p1,
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p2,
                     filename = "03_future_mhw_plot",
-                    width = 16,
-                    height = 10)
+                    width = 19,
+                    height = 12)
 
 # In case we want to add the d/MHW(PDF)
 cond_p_past <- ggplot(data = con_p_mhw_threshold_past, 

@@ -49,10 +49,10 @@ p_mhw_occurs %>%
 
 
 between_fisheries <- p_mhw_occurs %>%
-  select(fishery, p_at_least_one)
+  select(eu_rnpa, fishery, p_at_least_one)
 
 model <- lm(p_at_least_one ~ fishery, data = between_fisheries)
-car::Anova(model, type = "III")
+car::Anova(model, type = "II", white.adjust = TRUE)
 
 # P (MHW >= Threshold | MHW Occurs) --------------------------------------------
 # We ow calculate P((MHW ≥ Thershold) | MHW occurs): The probability that
