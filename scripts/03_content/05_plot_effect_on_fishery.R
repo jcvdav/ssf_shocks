@@ -26,6 +26,7 @@ models <- readRDS(file = here("data", "output", "effect_on_fishery_models.rds"))
 
 # Define functions -------------------------------------------------------------
 coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumulative:befTRUE"){
+  # browser()
   
   # Get the title --------------------------------------------------------------
   title <- str_to_title(str_replace_all(fishery, "_", " "))
@@ -53,7 +54,8 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
     filter(str_detect(term, pattern)) %>%
     mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
     mutate(term = fct_reorder(term, -estimate),
-           p_fill = p.value < 0.05)#estimate)
+           p_fill = p.value < 0.05,
+           fill2 = (1 * p_fill) * estimate)
   
   # Build the plot -------------------------------------------------------------
   p <- ggplot(data = plot_data,
@@ -62,17 +64,23 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
     geom_vline(xintercept = 0) +
     geom_vline(xintercept = ref,
                linetype = "dashed") +
-    geom_pointrange(aes(fill = estimate,
-                        xmin = estimate - std.error,
-                        xmax = estimate + std.error),
-                    color = "gray10",
-                    shape = set_shape) + 
-    geom_point(aes(color = p_fill)) + 
+    geom_errorbarh(aes(xmin = estimate - std.error,
+                       xmax = estimate + std.error),
+                   color = "gray10",
+                   height = 0) + 
+    geom_point(aes(fill = fill2),
+               shape = set_shape) +
+    # geom_pointrange(aes(fill = fill2,
+    #                     xmin = estimate - std.error,
+    #                     xmax = estimate + std.error),
+    #                 fatten = 2,
+    #                 color = "gray10",
+    #                 shape = set_shape) + 
     scale_fill_gradient2(low = "#E41A1C",
                          mid = "white",
                          high = "steelblue",
                          midpoint = 0) +
-    scale_color_manual(values = c("gray50", "transparent")) +
+    # scale_color_manual(values = c("gray50", "transparent")) +
     scale_x_continuous(limits = c(-0.9, 0.9)) +
     labs(title = title,
          x = xlab,

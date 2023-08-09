@@ -16,6 +16,7 @@
 pacman::p_load(
   here,
   fixest,
+  sf,
   modelsummary,
   tidyverse
 )
@@ -58,7 +59,7 @@ coef_data <- models %>%
          p_fill = (p.value <= 0.05) * estimate)
 
 # Fit models -------------------------------------------------------------------
-three_models <- feols(estimate ~ sw(lat, temp_cv, live_weight_cv) | fishery,
+three_models <- feols(estimate ~ sw(lat, temp_cv) | fishery,
       weights = ~live_weight,
       data = coef_data,
       vcov = vcov_conley(lat = ~lat,
@@ -66,8 +67,7 @@ three_models <- feols(estimate ~ sw(lat, temp_cv, live_weight_cv) | fishery,
                          cutoff = 50,
                          distance = "spherical")) %>%
   set_names(c("Biogeographic",
-              "Climate refiguia",
-              "Adaptation"))
+              "Climate refiguia"))
 
 ## VISUALIZE ###################################################################
 

@@ -42,7 +42,14 @@ models <- data %>%
                          .f = ~feols(fml = as.formula(.x),
                                      data = .y,
                                      panel.id = ~eu_rnpa + year,
-                                     vcov = "DK")))
+                                     vcov = "NW"
+                                     # waiting for vcov-hac SE errors to be available by fixest 
+                                     #vcov = vcov_conley(lat = ~lat,
+                                                        # lon = ~lon,
+                                                        # cutoff = 100,
+                                                        # distance = "spherical")
+                         ))
+         )
 
 # ## EXPORT ######################################################################
 saveRDS(object = models,
