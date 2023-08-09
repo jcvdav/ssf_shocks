@@ -137,8 +137,6 @@ plot <- plot_grid(
   rel_heights = c(2, 1.1)
 )
 
-plot
-
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = plot,
                     filename = "02_mhw_stats",

@@ -121,7 +121,7 @@ fe_plots <- models %>%
                                indep,
                                fe_model),
                      .f = coefplot,
-                     pattern = "norm_mhw_int_cumulative:befTRUE"))
+                     pattern = "norm_mhw_int_cumulative"))
 
 fe_land_mhw_cum_int <- fe_plots %$% 
   plot_grid(plotlist = plot, ncol = 3)

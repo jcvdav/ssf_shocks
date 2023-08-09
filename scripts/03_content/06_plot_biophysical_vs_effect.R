@@ -51,11 +51,10 @@ scatter_plot <- function(data, variable, lab, img = F) {
                                direction = "horizontal"),
            shape = guide_legend(title = "Fishery",
                                 title.position = "top",
-                                direction = "horizontal", override.aes = list(size = 2))) +
-    theme(legend.position = c(0, 0),
-          legend.justification = c(0, 0),
-          legend.box = "horizontal",
-          legend.box.background = element_rect(fill = "white"))
+                                direction = "horizontal", override.aes = list(size = 3))) +
+    theme(legend.box = "horizontal",
+          legend.justification="center",
+          legend.box.background = element_rect(fill = "white", color = "transparent"))
   
   if(img) {
     p <- p + 

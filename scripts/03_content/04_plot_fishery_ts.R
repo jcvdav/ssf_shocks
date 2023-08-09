@@ -19,37 +19,15 @@ pacman::p_load(
   tidyverse
 )
 
-# # Define functions -------------------------------------------------------------
-# ihs <- function(x){
-#   log(x + sqrt((x ^ 2) + 1))
-# }
-
 # Load data --------------------------------------------------------------------
 data <- readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) %>% 
-  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
-  filter(!eu_rnpa == "0203127311")
+  mutate(fishery = str_to_sentence(str_replace(fishery, "_", " ")))
+
+total_data <- readRDS(file = here("data", "output", "total_annual_normalized_landigs.rds"))
 
 critter <- c("data/img/Lobster_90.png",
              "data/img/Sea cucumber_90.png",
              "data/img/Urchin.png")
-
-total_data <- data %>%
-  group_by(period, period_long, year, fishery) %>%
-  summarize(live_weight = sum(live_weight, na.rm = T),
-            n = n_distinct(eu_rnpa),
-            norm_live_weight = live_weight / n) %>%
-  group_by(period, period_long, fishery) %>% 
-  mutate(period_mean = mean(norm_live_weight),
-         period_sd = sd(norm_live_weight))
-
-period_data <- data %>%
-  group_by(period, period_long, year, fishery) %>%
-  summarize(live_weight = sum(live_weight, na.rm = T),
-            n = n_distinct(eu_rnpa),
-            norm_live_weight = live_weight / n) %>%
-  group_by(period, period_long, fishery) %>% 
-  summarize(period_mean = mean(norm_live_weight),
-            period_sd = sd(norm_live_weight)) 
 
 ## VISUALIZE ###################################################################
 
@@ -121,44 +99,14 @@ p <- ggdraw() +
              halign = halign,
              valign = 0.27)
 
+
+## EXPORT ######################################################################
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(p,
                     filename = "04_fishery_ts",
                     width = 12,
                     height = 10)
 
-period_bars <- ggplot(data = period_data,
-                      aes(x = period_long,
-                          y = period_mean,
-                          fill = period_long)) +
-  geom_col(color = "gray10") +
-  geom_errorbar(aes(ymin = period_mean - period_sd,
-                     ymax = period_mean + period_sd),
-                 width = 0) +
-  facet_wrap(~fishery, scales = "free_y", ncol = 1) +
-  scale_fill_manual(values = period_palette) +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Period",
-       y = "Standardized landings\n(Landed wieght / active economic units)",
-       fill = "Period") +
-  theme(legend.position = "None")
-
-library(car)
-
-# bartlett.test(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
-
-lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
-Anova(mod = lob_mod, type = "II", white.adjust = TRUE)
-
-cuc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
-Anova(mod = cuc_mod, type = "II", white.adjust = TRUE)
-TukeyHSD(aov(cuc_mod))
-
-urc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Urchin"))
-Anova(mod = urc_mod, type = "II", white.adjust = TRUE)
-TukeyHSD(aov(urc_mod))
-
-## EXPORT ######################################################################
 
 
 

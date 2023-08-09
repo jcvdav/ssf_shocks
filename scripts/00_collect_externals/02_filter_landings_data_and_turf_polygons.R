@@ -82,6 +82,7 @@ seasons <- expand_grid(main_species_group = spp,
 # - Data for 2011, 2012, and 2013 (three immediate years prior)
 
 filtered_landings <- landings %>%
+  filter(!eu_rnpa == "0203127311") %>% # This EU all of a sudden reports 10X urching landings
   inner_join(seasons, by = c("main_species_group", "month")) %>% 
   mutate(main_species_group = case_when(
     main_species_group == "LANGOSTA" ~ "lobster",

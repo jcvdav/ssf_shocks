@@ -28,8 +28,6 @@ p_mhw_occurs_past <- readRDS(file = here("data", "output", "p_mhw_occurs.rds")) 
 
 p_mhw_occurs_future <- readRDS(file = here("data", "output", "p_mhw_occurs_future.rds"))
 
-con_p_mhw_threshold_past <- readRDS(file = here("data", "output", "con_p_mhw_threshold.rds"))
-
 con_p_mhw_threshold_future <- readRDS(file = here("data", "output", "con_p_mhw_threshold_future.rds"))
 
 centroids <- st_read(dsn = here("data", "processed", "centroids.gpkg")) %>% 
@@ -48,35 +46,6 @@ p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
                          ssp == "ssp245" ~ "SSP2-4.5",
                          ssp == "ssp585" ~ "SSP5-8.5",
                          T ~ "Historical"))
-
-# Test whether there are diffrences between SSP and Historical
-model <- lm(p_at_least_one ~ fishery + ssp, data = p_mhw_occurs)
-
-car::Anova(model, type = "II", white.adjust = TRUE)
-
-TukeyHSD(aov(model)) %>% 
-  as.list() %>% 
-  map_dfr(~as_tibble(.x, rownames = "group"), .id = "source") %>% 
-  janitor::clean_names() %>% 
-  select(-c(4, 5)) %>% 
-  knitr::kable() %>%
-  kableExtra::collapse_rows(columns = 1) %>%
-  kableExtra::kable_styling()
-
-
-# Test whetehr there are differences between SSPs
-model <- lm(mean ~ fishery + ssp, data = con_p_mhw_threshold_future)
-
-car::Anova(model, type = "II", white.adjust = TRUE)
-
-TukeyHSD(aov(model)) %>% 
-  as.list() %>% 
-  map_dfr(~as_tibble(.x, rownames = "group"), .id = "source") %>% 
-  janitor::clean_names() %>% 
-  select(-c(4, 5)) %>% 
-  knitr::kable() %>%
-  kableExtra::collapse_rows(columns = 1) %>%
-  kableExtra::kable_styling()
 
 # X ----------------------------------------------------------------------------
 change_in_p <- bind_rows(p_mhw_occurs_past,
@@ -218,26 +187,3 @@ startR::lazy_ggsave(plot = p2,
                     filename = "03_future_mhw_plot",
                     width = 19,
                     height = 12)
-
-# In case we want to add the d/MHW(PDF)
-cond_p_past <- ggplot(data = con_p_mhw_threshold_past, 
-                      mapping = aes(x = threshold, y = cond_p)) +
-  geom_line(aes(group = eu_rnpa),
-            linewidth = 0.1,
-            color = "cadetblue") +
-  stat_summary(geom = "ribbon",
-               fill = "#E41A1C",
-               alpha = 0.5,
-               fun.data = mean_cl_normal) +
-  stat_summary(geom = "line",
-               fun = "mean",
-               linewidth = 0.5) +
-  facet_wrap(~fishery, ncol = 1) +
-  labs(x = "MHW Cum. Int. (°C days)",
-       y = expression("P((Cum. Int. ">=~" X) | MHW Occurs)"))
-
-p_mhw_plot <- cowplot::plot_grid(p1, cond_p_past,
-                                 ncol = 2,
-                                 labels = c("", "c"),
-                                 label_x = 0.9)
-
