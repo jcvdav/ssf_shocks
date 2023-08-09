@@ -77,28 +77,6 @@ mhw_ts_long <- ggplot(data = mhw_data$mhw[[1]]$event,
   theme(legend.position = c(0, 1),
         legend.justification = c(0, 1))
 
-baseline_rec <- function(data){
-  data %>% 
-    filter(!period == 1) %>% 
-    group_by(year, period_long) %>% 
-    summarize(mean_density = mean(density)) %>% 
-    ungroup() %>% 
-    filter(mean_density > 0) %>% 
-    mutate(hist_min = min(mean_density[period_long == "Before MHW"])) %>% 
-    filter((mean_density > hist_min & period_long == "After MHW") |
-             (mean_density == hist_min & period_long == "Before MHW")) %>% 
-    group_by(period_long) %>% 
-    slice_min(year) %>% 
-    ungroup()  
-}
-
-rec_data <- data %>% 
-  group_by(fishery) %>% 
-  nest() %>% 
-  mutate(recs = map(data, baseline_rec)) %>% 
-  select(-data) %>% 
-  unnest(recs)
-
 eco_ts <- ggplot(data = data, aes(shape = fishery)) +
   geom_rect(xmin= 2013.5, xmax = 2016.5, ymin = -Inf, ymax = Inf, fill = "gray", inherit.aes = F) +
   geom_ribbon(aes(x = year,
@@ -122,12 +100,6 @@ eco_ts <- ggplot(data = data, aes(shape = fishery)) +
                geom = "pointrange",
                fun.data = mean_se,
                color = "gray10") +
-  geom_point(data = rec_data, aes(x = year, y = mean_density, color = period_long),
-             shape = 21, size = 6) +
-  geom_point(data = rec_data, aes(x = year, y = mean_density, color = period_long),
-             shape = 21, size = 5) +
-  geom_point(data = rec_data, aes(x = year, y = mean_density, color = period_long),
-             shape = 21, size = 4) +
   scale_x_continuous(breaks = seq(2006, 2020, by = 2),
                      labels = seq(2006, 2020, by = 2)) +
   scale_fill_manual(values = period_palette) +
@@ -174,9 +146,9 @@ c_mhw <- ggplot(data = data,
 
 # X ----------------------------------------------------------------------------
 p <- plot_grid(mhw_ts_long,
-               plot_grid(eco_ts, c_mhw, ncol = 2, labels = c("B", "C")),
+               plot_grid(eco_ts, c_mhw, ncol = 2, labels = c("b", "c")),
                ncol = 1, rel_heights = c(1, 2.5),
-               labels = c("A", ""))
+               labels = c("a", ""))
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = p,
