@@ -35,8 +35,10 @@ scatter_plot <- function(data, variable, lab, img = F) {
     geom_errorbar(aes(ymin = estimate + std.error,
                       ymax = estimate - std.error),
                   width = 0) +
-    geom_point(aes(fill = p_fill, size = live_weight / 1e3, shape = fishery)) +
-    scale_fill_gradient2(low = "#E41A1C", mid = "gray", high = "steelblue", midpoint = 0) +
+    geom_point(aes(fill = p_fill,
+                   size = live_weight / 1e3,
+                   shape = fishery)) +
+    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue", midpoint = 0) +
     scale_shape_manual(values = c(21, 22, 23)) +
     labs(x = lab,
          y = expression(hat(beta[i]))) +
@@ -49,7 +51,7 @@ scatter_plot <- function(data, variable, lab, img = F) {
                                direction = "horizontal"),
            shape = guide_legend(title = "Fishery",
                                 title.position = "top",
-                                direction = "horizontal")) +
+                                direction = "horizontal", override.aes = list(size = 2))) +
     theme(legend.position = c(0, 0),
           legend.justification = c(0, 0),
           legend.box = "horizontal",
@@ -95,4 +97,4 @@ p <- plot_grid(plots, leg,
 startR::lazy_ggsave(plot = p,
                     filename = "06_biophysical_vs_effect",
                     width = 20,
-                    height = 10)
+                    height = 9)

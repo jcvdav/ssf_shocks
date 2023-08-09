@@ -26,7 +26,6 @@ models <- readRDS(file = here("data", "output", "effect_on_fishery_models.rds"))
 
 # Define functions -------------------------------------------------------------
 coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumulative:befTRUE"){
-  # browser()
   
   # Get the title --------------------------------------------------------------
   title <- str_to_title(str_replace_all(fishery, "_", " "))

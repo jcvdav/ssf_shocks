@@ -56,18 +56,20 @@ coef_data <- models %>%
   left_join(hist_landings, by = c("fishery", "eu_rnpa")) %>% 
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
   mutate(img = here("data", "img", paste0(fishery, ".png")),
-         p_fill = (p.value <= 0.05) * estimate)
+         p_fill = 1* (p.value <= 0.05) * estimate,
+         eu_name = fct_reorder(eu_name, estimate))
 
 # Fit models -------------------------------------------------------------------
-three_models <- feols(estimate ~ sw(lat, temp_cv) | fishery,
+three_models <- feols(estimate ~ sw(lat, temp_cv, live_weight_cv) | fishery,
       weights = ~live_weight,
       data = coef_data,
       vcov = vcov_conley(lat = ~lat,
                          lon = ~lon,
-                         cutoff = 50,
+                         cutoff = 100,
                          distance = "spherical")) %>%
   set_names(c("Biogeographic",
-              "Climate refiguia"))
+              "Climate refiguia", 
+              "Adaptation"))
 
 ## VISUALIZE ###################################################################
 
