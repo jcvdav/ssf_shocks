@@ -25,6 +25,12 @@ pacman::p_load(
 models <- readRDS(file = here("data", "output", "effect_on_fishery_models.rds"))
 
 # Define functions -------------------------------------------------------------
+count_effects <- function(model) {
+  tidy(model) %>%
+    filter(str_detect(term, "[:digit:]")) %>%
+    mutate(neg = estimate < 0, sig = p.value < 0.05) %>%
+    count(neg, sig)
+}
 coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumulative:befTRUE"){
   
   # Get the title --------------------------------------------------------------
@@ -121,10 +127,17 @@ fe_plots <- models %>%
                                indep,
                                fe_model),
                      .f = coefplot,
-                     pattern = "norm_mhw_int_cumulative"))
+                     pattern = "norm_mhw_int_cumulative"),
+         counts = map(fe_model, count_effects))
 
+# Extract plots
 fe_land_mhw_cum_int <- fe_plots %$% 
   plot_grid(plotlist = plot, ncol = 3)
+
+# Extract tables
+fe_plots %>% 
+  select(fishery, counts) %>%
+  unnest(counts)
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
