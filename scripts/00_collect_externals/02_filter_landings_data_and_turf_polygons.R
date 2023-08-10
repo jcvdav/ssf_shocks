@@ -35,10 +35,10 @@ landings <- readRDS(
 turf_polygons <- st_read(dsn = here("data", "raw", "turf_polygons.gpkg"))
 
 eu_rnpas <- turf_polygons %>% 
-  filter(!eu_rnpa == "0203008198") %>% # This EU all of a suddedn caught 100-times more than usual. It's either poaching or an error
+  filter(!eu_rnpa == "0203008198") %>% # This EU all of a sudden caught 100-times more than usual. It's either poaching or an error
   st_centroid() %>% 
   bind_cols(st_coordinates(.)) %>% 
-  sf::st_drop_geometry() %>% 
+  sf::st_drop_geometry() %>%
   filter(Y > 25) %>% # Filter polygons below 25 N
   select(fishery, eu_rnpa, eu_name) %>% 
   distinct()
@@ -82,6 +82,7 @@ seasons <- expand_grid(main_species_group = spp,
 # - Data for 2011, 2012, and 2013 (three immediate years prior)
 
 filtered_landings <- landings %>%
+  filter(!eu_rnpa == "0203127311") %>% # This EU all of a sudden reports 10X urching landings
   inner_join(seasons, by = c("main_species_group", "month")) %>% 
   mutate(main_species_group = case_when(
     main_species_group == "LANGOSTA" ~ "lobster",
@@ -92,7 +93,8 @@ filtered_landings <- landings %>%
   filter(year <= 2021,
          year >= 2000) %>%
   group_by(year, eu_rnpa, main_species_group) %>% 
-  summarize(live_weight = sum(live_weight),
+  summarize(live_weight = sum(live_weight, na.rm = T),
+            landed_weight = sum(landed_weight, na.rm = T),
             value = sum(value)) %>% 
   left_join(periods, by = "year") %>% 
   mutate(ifelse(eu_rnpa == "0203002125", "0203126552", eu_rnpa)) %>% 
@@ -104,7 +106,7 @@ filtered_landings <- landings %>%
   mutate(n2 = n()) %>% 
   ungroup() %>% 
   group_by(eu_rnpa, main_species_group) %>% 
-  filter(all(n2 >= 3)) %>%
+  filter(all(n2 >= 2)) %>%
   select(-c(n, n2)) %>% 
   group_by(eu_rnpa, main_species_group) %>% 
   filter(sum(year %in% c(2011, 2012, 2013)) == 3) %>% 

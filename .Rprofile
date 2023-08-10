@@ -1,5 +1,7 @@
 source("renv/activate.R")
 
+if(!require(pacman)) {install.packages("pacman")}
+
 periods <- dplyr::tibble(year = 1980:2022,
                          period = dplyr::case_when(year <= 2013 ~ "0",
                                             dplyr::between(year, 2014, 2016) ~ "1",
@@ -10,7 +12,13 @@ periods <- dplyr::tibble(year = 1980:2022,
   dplyr::mutate(period_long = forcats::fct_reorder(period_long, year))
 
 
-period_palette <- c("steelblue", "#E41A1C", "darkorange1", "cadetblue")
+period_palette_old <- c("steelblue", "#E41A1C", "darkorange1", "cadetblue")
+
+period_palette <- c("#175E54", "#8C1515","#E98300")
+
+# From https://www.ipcc.ch/site/assets/uploads/2022/09/IPCC_AR6_WGI_VisualStyleGuide_2022.pdf
+# Page 9
+ssp_palette <- c("#173c66", "#f79420", "#951b1e")
 
 ihs <- function(x){
   log(x + sqrt((x ^ 2) + 1))
