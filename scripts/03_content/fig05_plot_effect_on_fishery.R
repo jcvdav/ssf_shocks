@@ -80,7 +80,7 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                          high = "steelblue",
                          midpoint = 0) +
     # scale_color_manual(values = c("gray50", "transparent")) +
-    scale_x_continuous(limits = c(-0.9, 0.9)) +
+    # scale_x_continuous(limits = c(-0.9, 0.9)) +
     labs(title = title,
          x = xlab,
          y = NULL,
@@ -128,6 +128,6 @@ fe_land_mhw_cum_int <- fe_plots %$%
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
-                    filename = "05_effect_on_fishery",
+                    filename = "fig05_effect_on_fishery",
                     width = 18,
                     height = 12)

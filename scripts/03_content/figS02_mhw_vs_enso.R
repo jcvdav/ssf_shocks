@@ -43,7 +43,7 @@ lines <- tibble(
 # X ----------------------------------------------------------------------------
 plot_data <- mhw %>% 
   group_by(eu_rnpa, year, period, period_long, lat) %>% 
-  summarize(mhw_int_cumulative = sum(mhw_int_cumulative, na.rm = T)) %>% 
+  summarize(mhw_int_cumulative = sum(mhw_int_cumulative, na.rm = T) / n()) %>% 
   ungroup() %>% 
   filter(between(year, 1982, 1983) |
            between(year, 1991, 1992) |
@@ -73,22 +73,19 @@ mhw_vs_enso <- ggplot(data = plot_data,
              size = 4,
              alpha = 21) + 
   coord_equal() +
-  scale_fill_viridis_c() +
-  scale_color_manual(values = c("gray", "gray75", "gray25", "black")) +
+  scale_fill_viridis_c(option = "magma") +
+  scale_color_manual(values = c("gray90", "gray70", "gray50", "black")) +
   guides(fill = guide_colorbar(frame.colour = "black",
                                ticks.colour = "black")) +
-  lims(x = c(750, 4500), y = c(750, 4500)) +
   labs(x = "Total cumulative MHW intensity (°C days) across 3 El Nino events (6 yrs)",
        y = "Total cumulative MHW intensity (°C days) across the MHW regime (3 yrs)",
        fill = "Latitude (°N)",
-       color = "Slope") +
-  theme(legend.position = c(0, 1),
-        legend.justification = c(0, 1))
+       color = "Slope")
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = mhw_vs_enso,
-                    filename = "figx_mhw_vs_enso",
-                    width = 15,
-                    height = 15)
+                    filename = "figS02_mhw_vs_enso",
+                    width = 14,
+                    height = 10)

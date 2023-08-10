@@ -94,6 +94,6 @@ p <- plot_grid(plots, leg,
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p,
-                    filename = "06_biophysical_vs_effect",
+                    filename = "fig06_biophysical_vs_effect",
                     width = 20,
                     height = 9)

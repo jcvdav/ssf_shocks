@@ -152,6 +152,6 @@ p <- plot_grid(mhw_ts_long,
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = p,
-                    filename = "08_env_ecol",
+                    filename = "fig08_env_ecol",
                     width = 15,
                     height = 20)

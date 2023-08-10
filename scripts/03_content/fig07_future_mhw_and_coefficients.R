@@ -85,7 +85,7 @@ p <- plot_grid(p1, p2,
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(
   plot = p,
-  filename = "fig_7_future_mhw_and_coefficients",
+  filename = "fig07_future_mhw_and_coefficients",
   width = 18,
   height = 14
 )

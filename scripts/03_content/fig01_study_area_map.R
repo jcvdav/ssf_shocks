@@ -91,7 +91,7 @@ map <- ggdraw() +
 
 startR::lazy_ggsave(
   plot = map,
-  filename = "01_study_area_map",
+  filename = "fig01_study_area_map",
   width = 8,
   height = 10
 )

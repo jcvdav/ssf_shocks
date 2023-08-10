@@ -184,6 +184,6 @@ p2 <- plot_grid(p1,
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p2,
-                    filename = "03_future_mhw_plot",
+                    filename = "fig03_future_mhw_plot",
                     width = 19,
                     height = 12)

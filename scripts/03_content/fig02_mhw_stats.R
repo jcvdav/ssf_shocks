@@ -139,7 +139,7 @@ plot <- plot_grid(
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = plot,
-                    filename = "02_mhw_stats",
+                    filename = "fig02_mhw_stats",
                     width = 16,
                     height = 20)
 

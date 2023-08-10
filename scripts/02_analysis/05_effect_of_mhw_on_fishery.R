@@ -15,6 +15,7 @@
 # Load packages ----------------------------------------------------------------
 pacman::p_load(
   here,
+  lme4,
   fixest,
   tidyverse
 )
@@ -69,22 +70,20 @@ models <- data %>%
       "norm_mhw_int_cumulative_lag3"
     )
   ) %>% 
-  mutate(fe_fml = paste0(dep, "~ year + ", indep, ":eu_rnpa | eu_rnpa")) %>% 
+  mutate(fe_fml = paste0(dep, "~ year + ", indep, ":eu_rnpa"),
+         re_fml = paste(dep, "~ year +", indep, " + (0 + ", indep, " | eu_rnpa)")) %>% 
   mutate(fe_model = map2(.x = fe_fml, .y = data,
                          .f = ~feols(fml = as.formula(.x),
                                      data = .y,
                                      panel.id = ~eu_rnpa + year,
-                                     vcov = function(x)vcov_conley_hac(x))))
-
-regime_model <- data %>% 
-  mutate(bef = (1 * period %in% c("0", "1"))) %>% 
-  group_by(fishery) %>%
-  nest() %>% 
-  mutate(fe_model = map(data, ~feols(fml = norm_live_weight ~ year + norm_mhw_int_cumulative:bef:eu_rnpa | eu_rnpa,
-                               data = .x,
-                               panel.id = ~eu_rnpa + year,
-                               vcov = function(x)vcov_conley_hac(x))))
-
+                                     vcov = function(x)vcov_conley_hac(x))),
+         re_model = map2(.x = re_fml, .y = data,
+                         .f = ~lmer(formula = .x,
+                                    data = .y)),
+         regime_model = map(data, ~feols(fml = norm_live_weight ~ year + norm_mhw_int_cumulative:bef:eu_rnpa | eu_rnpa,
+                                         data = .x %>% mutate(bef = (period %in% c("0", "1"))),
+                                         panel.id = ~eu_rnpa + year,
+                                         vcov = function(x)vcov_conley_hac(x))))
 
 ## EXPORT ######################################################################
 saveRDS(object = models,

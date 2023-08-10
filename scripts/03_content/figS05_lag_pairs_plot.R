@@ -27,12 +27,12 @@ data <- models %>%
   mutate(coefs = map(fe_model, broom::tidy)) %>% 
   select(fishery, indep, coefs) %>% 
   unnest(coefs) %>% 
-  filter(str_detect(term, ":befTRUE:eu_rnpa")) %>% 
+  filter(str_detect(term, ":eu_rnpa")) %>% 
   mutate(eu_rnpa = str_extract(term, "[:digit:]{10}")) %>% 
   select(eu_rnpa, indep, estimate, fishery) %>%
   mutate(indep = case_when(indep == "norm_mhw_int_cumulative" ~ "hat(beta[i])",
-                           indep == "norm_mhw_int_cumulative_lag" ~ "hat(beta[i])(lag == 1)",
-                           indep == "norm_mhw_int_cumulative_lag3" ~ "hat(beta[i])(lag == 3)")) %>% 
+                           indep == "norm_mhw_int_cumulative_lag" ~ "hat(beta[i])(lag = 1)",
+                           indep == "norm_mhw_int_cumulative_lag3" ~ "hat(beta[i])(lag = 3)")) %>% 
   pivot_wider(names_from = indep, values_from = estimate)
 
 ## VISUALIZE ###################################################################
@@ -47,7 +47,7 @@ lag_pairs_plot <- ggpairs(data = data,
 ## EXPORT ######################################################################
 startR::lazy_ggsave(
   plot = lag_pairs_plot,
-  filename = "lag_pairs_plot",
+  filename = "figS05_lag_pairs_plot",
   width = 18,
   height = 12
 )
