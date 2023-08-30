@@ -87,5 +87,5 @@ mhw_vs_enso <- ggplot(data = plot_data,
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = mhw_vs_enso,
                     filename = "figS02_mhw_vs_enso",
-                    width = 14,
-                    height = 10)
+                    width = 18,
+                    height = 12)

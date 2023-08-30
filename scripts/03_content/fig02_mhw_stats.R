@@ -60,33 +60,36 @@ hovmoller <- mhw %>%
   geom_text(x = 1985,
             y = 25,
             label = "'82-'83 El Niño",
+            color = "white",
             inherit.aes = F) +
   geom_text(x = 1992,
             y = 30,
             label = "'91-'92 El Niño",
+            color = "white",
             inherit.aes = F) +
   geom_text(x = 1998,
             y = 35,
             label = "'97-'98 El Niño",
+            color = "white",
             inherit.aes = F) +
-  geom_text(x = 2014,
+  geom_text(x = 2017,
             y = 39,
             label = "MHW regime",
+            color = "white",
             inherit.aes = F) +
   scale_x_continuous(expand = c(0, 0)) +
-  scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
-                                                          type = "continuous"), na.value = "white") +
+  # scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
+                                                          # type = "continuous")) +
+  scale_fill_gradientn(colours = rev(ipcc_temp)) +
   guides(fill = guide_colorbar(title = "Cumulative Intensity (°C days)",
                                frame.colour = "black",
                                ticks.colour = "black")) +
-  labs(x = "|___________________________________ Before _______________________________| During |_____ After _|",
+  labs(x = "|_______________________________________________ Before _______________________________| During |________ After _|",
        y = NULL)+
   theme(legend.position = "bottom",
         legend.box.spacing = unit(0.1, "mm"),
         axis.title.x = element_text(hjust = 1)) +
   scale_y_discrete(expand = c(0, 0))
-
-hovmoller
 
 # Build boxplots ---------------------------------------------------------------
 base <- ggplot(data = plot_data,
@@ -108,6 +111,9 @@ mhw_days <- base +
   geom_boxplot(aes(y = mhw_days),
                outlier.size = out_size,
                outlier.alpha = out_alpha) +
+  theme(legend.position = c(0, 1),
+        legend.justification = c(0, 1),
+        legend.title = element_blank()) +
   labs(y = "MHW Days")
 
 mhw_int <- base +
@@ -120,14 +126,15 @@ mhw_int_cumulative <- base +
   geom_boxplot(aes(y = mhw_int_cumulative),
                outlier.size = out_size,
                outlier.alpha = out_alpha) +
-  theme(legend.position = c(0, 1),
-        legend.justification = c(0, 1)) +
   labs(y = "Cumulative Intensity (°C days)")
 
 plot <- plot_grid(
   hovmoller,
     plot_grid(
-      mhw_events, mhw_days, mhw_int, mhw_int_cumulative,
+      mhw_events,
+      mhw_days,
+      mhw_int,
+      mhw_int_cumulative,
       ncol = 2,
       labels = c("b", "c", "d", "e"), 
       label_x = 0.8),
@@ -140,7 +147,7 @@ plot <- plot_grid(
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = plot,
                     filename = "fig02_mhw_stats",
-                    width = 16,
-                    height = 20)
+                    width = 18,
+                    height = 21)
 
 

@@ -38,7 +38,7 @@ scatter_plot <- function(data, variable, lab, img = F) {
     geom_point(aes(fill = p_fill,
                    size = live_weight / 1e3,
                    shape = fishery)) +
-    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "steelblue", midpoint = 0) +
+    scale_fill_gradientn(colours = ipcc_temp) +
     scale_shape_manual(values = c(21, 22, 23)) +
     labs(x = lab,
          y = expression(hat(beta[i]))) +

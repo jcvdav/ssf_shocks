@@ -26,19 +26,21 @@ pacman::p_load(
 coef_data <- readRDS(file = here("data", "output", "effect_on_fishery_and_biophysical.rds"))
 con_p_mhw_threshold_future <- readRDS(file = here("data", "output", "con_p_mhw_threshold_future.rds"))
 turfs <- sf::st_read(dsn = here("data","processed","turf_polygons.gpkg")) %>% 
-  ms_simplify(keep_shapes = T) %>% 
-  st_centroi
+  st_centroid() %>% 
+  st_transform("EPSG:6362")
 
 corners <- st_bbox(turfs)
 
 mex <- ne_countries(country = c("Mexico", "United States of America"),
                     returnclass = "sf",
                     scale = "large") %>% 
-  select(sov_a3)
+  select(sov_a3) %>% 
+  st_transform("EPSG:6362")
 
 mex_low_res <- ne_countries(country = c("Mexico"),
                             returnclass = "sf",
-                            scale = "small")
+                            scale = "small") %>% 
+  st_transform("EPSG:6362")
 
 mex_crop <- st_crop(x = mex,
                     y = st_buffer(turfs, dist = 5e4))
@@ -135,3 +137,4 @@ startR::lazy_ggsave(
   width = 18,
   height = 20
 )
+

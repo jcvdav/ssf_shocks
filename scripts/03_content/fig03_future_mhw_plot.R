@@ -102,8 +102,8 @@ p_at_least_one <- ggplot(
   scale_fill_manual(values = c("black", ssp_palette)) +
   scale_shape_manual(values = c(21, 22, 24)) +
   guides(color = guide_legend(ncol = 2,
-                              override.aes=list(shape = 21,
-                                                size = 0.9)),
+                              override.aes = list(shape = 21,
+                                                  size = 0.9)),
          shape = "none") +
   labs(x = "Fishery",
        y = "P(MHW Occurs)",
@@ -170,12 +170,15 @@ delta_p <- ggplot(change_in_p,
 p1 <- plot_grid(p_at_least_one,
                 p_as_big,
                 ncol = 1,
+                align = "vh",
                 labels = c("a", "c"),
                 label_x = 0.9)
 
 p2 <- plot_grid(p1,
           delta_p,
           ncol = 2,
+          axis = "t",
+          align = "vh",
           rel_widths = c(1, 1.5),
           labels = c("", "b"),
           label_x = 0.9)
@@ -185,5 +188,6 @@ p2 <- plot_grid(p1,
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p2,
                     filename = "fig03_future_mhw_plot",
-                    width = 19,
-                    height = 12)
+                    width = 18,
+                    height = 15)
+

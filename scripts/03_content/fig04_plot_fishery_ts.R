@@ -35,11 +35,12 @@ critter <- c("data/img/Lobster_90.png",
 landings_ts <- ggplot(data = data,
                       mapping = aes(x = year,
                                     y = norm_live_weight)) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
   geom_rect(xmin= 2013.5, xmax = 2016.5,
             ymin = -100, ymax = 500, fill = "gray", alpha = 0.5) +
   geom_line(aes(group = eu_rnpa),
             linewidth = 0.2,
-            color = "#016895") +
+            color = "black") +
   labs(x = "Year",
        y = "Standardized\nlandings",
        color = "Cooperative") +
@@ -104,7 +105,7 @@ p <- ggdraw() +
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(p,
                     filename = "fig04_fishery_ts",
-                    width = 12,
+                    width = 18,
                     height = 10)
 
 
