@@ -62,6 +62,24 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
            p_fill = p.value < 0.05,
            fill2 = (1 * p_fill) * estimate)
   
+  hist <- ggplot(data = plot_data,
+                 mapping = aes(x = estimate)) +
+    geom_rect(xmin = -Inf, xmax = 0,
+              ymin = -Inf, ymax = Inf,
+              color = "#B1182B",
+              fill = "#B1182B") +
+    geom_rect(xmin = 0, xmax = Inf,
+              ymin = -Inf, ymax = Inf,
+              color = "#2166AB",
+              fill = "#2166AB") +
+    geom_histogram(aes(y = after_stat(count / sum(count))),
+                   binwidth = 0.25, color = "black", fill = "gray") +
+    scale_y_continuous(expand = expansion(mult = 0.05, 0),
+                       labels = scales::percent) +
+    scale_x_continuous(expand = expansion(0.05, 0)) +
+    theme(axis.title = element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "cm"))
+  
   # Build the plot -------------------------------------------------------------
   p <- ggplot(data = plot_data,
               mapping = aes(x = estimate,
@@ -75,19 +93,7 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                    height = 0) + 
     geom_point(aes(fill = fill2),
                shape = set_shape) +
-    # geom_pointrange(aes(fill = fill2,
-    #                     xmin = estimate - std.error,
-    #                     xmax = estimate + std.error),
-    #                 fatten = 2,
-    #                 color = "gray10",
-    #                 shape = set_shape) + 
-    # scale_fill_gradient2(low = "#E41A1C",
-    #                      mid = "white",
-    #                      high = "steelblue",
-    #                      midpoint = 0) +
     scale_fill_gradientn(colours = ipcc_temp) +
-    # scale_color_manual(values = c("gray50", "transparent")) +
-    # scale_x_continuous(limits = c(-0.9, 0.9)) +
     labs(title = title,
          x = xlab,
          y = NULL,
@@ -97,7 +103,8 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                                  ticks.colour = "black"),
            color = "none") +
     theme(legend.position = c(0, 0),
-          legend.justification = c(0, 0))
+          legend.justification = c(0, 0),
+          plot.margin = unit(c(0, 0, 0, 0), "cm"))
   
   if(class(model) == "lmerMod") {
     p <- p +
@@ -105,9 +112,12 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                  linetype = "dashed", color = "red")
   }
   
-  # if(singular){
-  #   p <- ggplot() + geom_text(x = 0, label = "ESTIMATION IS VOID")
-  # }
+  
+  p <- plot_grid(p,
+                 hist,
+                 ncol = 1,
+                 rel_heights = c(4, 1),
+                 align = "hv")
   
   p <- ggdraw() +
     draw_plot(p) +
@@ -140,8 +150,16 @@ fe_plots %>%
   select(fishery, counts) %>%
   unnest(counts)
 
+fe_plots %>% 
+  select(fishery, counts) %>%
+  unnest(counts) %>%
+  group_by(neg, sig) %>%
+  summarize(n = sum(n)) %>% 
+  janitor::adorn_percentages(denominator = "col") %>% 
+  janitor::adorn_pct_formatting()
+
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
                     filename = "fig05_effect_on_fishery",
                     width = 18,
-                    height = 12)
+                    height = 15)

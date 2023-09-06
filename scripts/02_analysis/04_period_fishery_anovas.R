@@ -33,7 +33,7 @@ total_data <- data %>%
             norm_live_weight = live_weight / n) %>%
   group_by(period, period_long, fishery) %>% 
   mutate(period_mean = mean(norm_live_weight),
-         period_sd = sd(norm_live_weight))
+         period_sd = sd(norm_live_weight)) %>% 
 
 # X ----------------------------------------------------------------------------
 lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
