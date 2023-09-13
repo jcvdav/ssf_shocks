@@ -67,6 +67,7 @@ main <- ggplot() +
   guides(
     fill = guide_colorbar(
       title = "Cumulative Intensity (°C days)",
+      title.position = "top", barwidth = 10,
       frame.colour = "black",
       ticks.colour = "black")) +
   scale_fill_gradientn(colours = rev(ipcc_temp)) +
@@ -74,7 +75,8 @@ main <- ggplot() +
   scale_y_continuous(expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(),
         legend.position = c(0, 0),
-        legend.justification = c(0, 0))
+        legend.justification = c(0, 0),
+        legend.direction = "horizontal")
 
 ref <- ggplot() +
   geom_sf(data = mex_low_res,
