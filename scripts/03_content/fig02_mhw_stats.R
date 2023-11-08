@@ -52,8 +52,8 @@ hovmoller <- mhw %>%
   summarize(mhw_int_cumulative = weighted.mean(x = mhw_int_cumulative,
                                                w = turf_area,
                                                na.rm = T),
-            lat = min(lat)) %>% 
-  ungroup() %>% 
+            lat = min(lat),
+            .groups = "drop") %>% 
   mutate(eu_rnpa = fct_reorder(eu_rnpa, lat)) %>% 
   ggplot() +
   geom_tile(aes(x = year, y = eu_rnpa, fill = mhw_int_cumulative)) +
@@ -72,9 +72,10 @@ hovmoller <- mhw %>%
             label = "'97-'98 El Niño",
             color = "white",
             inherit.aes = F) +
-  geom_text(x = 2017,
+  geom_text(x = 2010,
             y = 39,
-            label = "MHW regime",
+            label = "2014-2016 Blob +
+            El Niño",
             color = "white",
             inherit.aes = F) +
   scale_x_continuous(expand = c(0, 0)) +
@@ -84,12 +85,43 @@ hovmoller <- mhw %>%
   guides(fill = guide_colorbar(title = "Cumulative Intensity (°C days)",
                                frame.colour = "black",
                                ticks.colour = "black")) +
-  labs(x = "|_______________________________________________ Before _______________________________| During |________ After _|",
+  labs(x = "|___________________________ Before _________________________| During |____ After _|",
        y = NULL)+
   theme(legend.position = "bottom",
         legend.box.spacing = unit(0.1, "mm"),
         axis.title.x = element_text(hjust = 1)) +
   scale_y_discrete(expand = c(0, 0))
+
+# Get ranges to make sure the colorbar matches
+period_boxplot <- mhw %>% 
+  group_by(year, eu_rnpa) %>% 
+  summarize(mhw_int_cumulative = weighted.mean(x = mhw_int_cumulative,
+                                               w = turf_area,
+                                               na.rm = T),
+            .groups = "drop") %>%
+  mutate(when = case_when(between(year, 1981, 1983) ~ "''82-'83 El Niño",
+                          between(year, 1991, 1992) ~ "'91-'92 El Niño",
+                          between(year, 1997, 1998) ~ "'97-'98 El Niño",
+                          between(year, 2014, 2016) ~ "'14-'16 Blob + El Niño",
+                          T ~ "Other years"),
+         when = fct_reorder(when, year, max)) %>% 
+  group_by(when) %>% 
+  mutate(mean_mhw_int_cumulative = median(mhw_int_cumulative)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = when, y = mhw_int_cumulative, fill = mean_mhw_int_cumulative)) +
+  geom_boxplot(outlier.size = out_size,
+               outlier.alpha = out_alpha) +
+  stat_summary(geom = "point",
+               fun = "mean",
+               size = 2) +
+  guides(fill = guide_colorbar(title = "Cumulative Intensity (°C days)",
+                               frame.colour = "black",
+                               ticks.colour = "black")) +
+  scale_fill_gradientn(colours = rev(ipcc_temp), limits = c(0, 500)) +
+  labs(y = "Cumulative Intensity (°C days)",
+       x = "") +
+  theme(legend.position = c(0, 1),
+        legend.justification = c(0, 1))
 
 # Build boxplots ---------------------------------------------------------------
 base <- ggplot(data = plot_data,
@@ -99,7 +131,7 @@ base <- ggplot(data = plot_data,
   scale_fill_manual(values = period_palette) +
   theme(legend.position = "None") +
   labs(x = NULL,
-       fill = "Period")
+       fill = "Period") 
 
 mhw_events <- base +
   geom_boxplot(aes(y = mhw_events),
@@ -111,9 +143,6 @@ mhw_days <- base +
   geom_boxplot(aes(y = mhw_days),
                outlier.size = out_size,
                outlier.alpha = out_alpha) +
-  theme(legend.position = c(0, 1),
-        legend.justification = c(0, 1),
-        legend.title = element_blank()) +
   labs(y = "MHW Days")
 
 mhw_int <- base +
@@ -128,26 +157,33 @@ mhw_int_cumulative <- base +
                outlier.alpha = out_alpha) +
   labs(y = "Cumulative Intensity (°C days)")
 
-plot <- plot_grid(
+p1 <- plot_grid(
   hovmoller,
-    plot_grid(
-      mhw_events,
-      mhw_days,
-      mhw_int,
-      mhw_int_cumulative,
-      ncol = 2,
-      labels = c("b", "c", "d", "e"), 
-      label_x = 0.8),
+  period_boxplot,
   ncol = 1,
-  labels = c("a", ""),
-  label_x = 0.92,
-  rel_heights = c(2, 1.1)
+  labels = c("a", "b"),
+  rel_heights = c(2, 1.1),
+  align = "hv", axis = "x"
 )
+
+p2 <- plot_grid(
+  mhw_events,
+  mhw_days,
+  mhw_int,
+  mhw_int_cumulative,
+  ncol = 1,
+  labels = c("c", "d", "e", "f"), 
+  align = "hv")
+
+plot <- plot_grid(p1,
+                  p2,
+                  ncol = 2,
+                  rel_widths = c(1, 0.5))
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = plot,
                     filename = "fig02_mhw_stats",
-                    width = 18,
+                    width = 21,
                     height = 21)
 
 

@@ -73,7 +73,9 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
               color = "#2166AB",
               fill = "#2166AB") +
     geom_histogram(aes(y = after_stat(count / sum(count))),
-                   binwidth = 0.25, color = "black", fill = "gray") +
+                   binwidth = 0.25,
+                   color = "black",
+                   fill = "gray") +
     scale_y_continuous(expand = expansion(mult = 0.05, 0),
                        labels = scales::percent) +
     scale_x_continuous(expand = expansion(0.05, 0)) +
@@ -93,7 +95,8 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                    height = 0) + 
     geom_point(aes(fill = fill2),
                shape = set_shape) +
-    scale_fill_gradientn(colours = ipcc_temp) +
+    scale_fill_gradientn(colours = ipcc_temp, limits = c(-1, 1)) +
+    scale_x_continuous(limits = c(-1.2, 1)) +
     labs(title = title,
          x = xlab,
          y = NULL,
@@ -102,22 +105,37 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
                                  frame.colour = "black",
                                  ticks.colour = "black"),
            color = "none") +
-    theme(legend.position = c(0, 0),
-          legend.justification = c(0, 0),
+    theme(legend.position = "none",
           plot.margin = unit(c(0, 0, 0, 0), "cm"))
+  
+  if(title == "Lobster") {
+    p <- p + theme(legend.position = c(0, 0),
+                   legend.justification = c(0, 0))
+  }
   
   if(class(model) == "lmerMod") {
     p <- p +
       geom_vline(xintercept = coef,
-                 linetype = "dashed", color = "red")
+                 linetype = "dashed",
+                 color = "red")
   }
   
   
+  if(title == "Lobster") {
   p <- plot_grid(p,
                  hist,
                  ncol = 1,
                  rel_heights = c(4, 1),
+                 labels = "auto",
                  align = "hv")
+  } else {
+    p <- plot_grid(p,
+                   hist,
+                   ncol = 1,
+                   rel_heights = c(4, 1),
+                   labels = c("", ""),
+                   align = "hv")
+  }
   
   p <- ggdraw() +
     draw_plot(p) +
@@ -143,8 +161,10 @@ fe_plots <- models %>%
 
 # Extract plots
 fe_land_mhw_cum_int <- fe_plots %$% 
-  plot_grid(plotlist = plot, ncol = 3)
+  plot_grid(plotlist = plot,
+            ncol = 3, align = "hv")
 
+fe_land_mhw_cum_int
 # Extract tables
 fe_plots %>% 
   select(fishery, counts) %>%
