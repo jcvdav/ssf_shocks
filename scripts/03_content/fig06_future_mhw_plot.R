@@ -45,7 +45,7 @@ p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
          ssp = case_when(ssp == "ssp126" ~ "SSP1-2.6",
                          ssp == "ssp245" ~ "SSP2-4.5",
                          ssp == "ssp585" ~ "SSP5-8.5",
-                         T ~ "Historical"))
+                         T ~ "Observed"))
 
 # X ----------------------------------------------------------------------------
 change_in_p <- bind_rows(p_mhw_occurs_past,

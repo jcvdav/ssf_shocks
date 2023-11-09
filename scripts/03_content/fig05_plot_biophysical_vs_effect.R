@@ -73,13 +73,13 @@ scatter_plot <- function(data, variable, lab, img = F) {
 
 # X ----------------------------------------------------------------------------
 # Need to fiddle witht eh coordinates for the images
-lat <- scatter_plot(coef_data, lat, "°Latitude (Centroid)")
+lat <- scatter_plot(coef_data, lat_dist, "Distance from 25°N parallel (Thousand Km)")
 leg <- get_legend(lat)
 lat <- lat + 
   theme(legend.position = "None")
-temp_cv <- scatter_plot(coef_data, temp_cv, "CV SST") +
+temp_cv <- scatter_plot(coef_data, temp_cv, "Variation in SST (CV)") +
   theme(legend.position = "None")
-land_cv <- scatter_plot(coef_data, live_weight_cv, "CV Landings") +
+land_cv <- scatter_plot(coef_data, live_weight_cv, "Variation in landings (CV)") +
   theme(legend.position = "None")
 
 plots <- plot_grid(lat, temp_cv, land_cv, ncol = 3,

@@ -117,9 +117,9 @@ qdm_wrap <- function(obs, his_pred, pred) {
   
   calibration_indices <- between(data$t, ymd("1982-01-01"), ymd("2021-12-31"))
   
-  res <- QDM(o.c = data$obs_temp[calibration_indices],
-             m.c = data$mod_temp[calibration_indices],
-             m.p = data$mod_temp[!calibration_indices])
+  res <- QDM(o.c = data$obs_temp[calibration_indices], #vector of observed samples during the calibration period
+             m.c = data$mod_temp[calibration_indices], #vector of model outputs during the calibration period
+             m.p = data$mod_temp[!calibration_indices]) #vector of model outputs during the projected period
   
   data <- data %>% 
     mutate(temp = c(res[[1]], res[[2]]))
