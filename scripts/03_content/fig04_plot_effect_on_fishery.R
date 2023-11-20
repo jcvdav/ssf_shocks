@@ -180,6 +180,6 @@ fe_plots %>%
 
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = fe_land_mhw_cum_int,
-                    filename = "fig05_effect_on_fishery",
+                    filename = "fig04_effect_on_fishery",
                     width = 18,
                     height = 15)

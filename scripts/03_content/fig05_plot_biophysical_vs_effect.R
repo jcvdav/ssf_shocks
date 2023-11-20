@@ -72,28 +72,57 @@ scatter_plot <- function(data, variable, lab, img = F) {
 ## VISUALIZE ###################################################################
 
 # X ----------------------------------------------------------------------------
-# Need to fiddle witht eh coordinates for the images
-lat <- scatter_plot(coef_data, lat_dist, "Distance from 25°N parallel (Thousand Km)")
+# Need to fiddle with eh coordinates for the images
+lat <- scatter_plot(coef_data, lat_dist, "Distance from distribution limit\n(25°N parallel, 100 Km)")
 leg <- get_legend(lat)
 lat <- lat + 
-  theme(legend.position = "None")
-temp_cv <- scatter_plot(coef_data, temp_cv, "Variation in SST (CV)") +
-  theme(legend.position = "None")
-land_cv <- scatter_plot(coef_data, live_weight_cv, "Variation in landings (CV)") +
-  theme(legend.position = "None")
+  theme(legend.position = "None") +
+  annotate(geom = "text",
+           x = 1.5, y = -1,
+           label = "Southern TURFs",
+           size = 2) +
+  annotate(geom = "text",
+           x = 7, y = -1,
+           label = "Northern TURFs",
+           size = 2)
+temp_cv <- scatter_plot(coef_data, temp_cv, "Variation in SST (CV_i)") +
+  theme(legend.position = "None") +
+  annotate(geom = "text",
+           x = 0.03, y = -1,
+           label = "Stable SST",
+           size = 2) +
+  annotate(geom = "text",
+           x = 0.042, y = -1,
+           label = "Variable SST",
+           size = 2)
+land_cv <- scatter_plot(coef_data, live_weight_cv, "Variation in landings (CV_i)") +
+  theme(legend.position = "None") +
+  annotate(geom = "text",
+           x = 0.3, y = -1,
+           label = "Stable landings",
+           size = 2) +
+  annotate(geom = "text",
+           x = 1.1, y = -1,
+           label = "Variable landings",
+           size = 2)
 
-plots <- plot_grid(lat, temp_cv, land_cv, ncol = 3,
+plots <- plot_grid(lat,
+                   temp_cv,
+                   land_cv,
+                   ncol = 3,
+                   align = "hv",
                    labels = c("auto"))
 
 p <- plot_grid(plots, leg,
                rel_heights = c(1, 0.2),
-               align = "hv", axis = "l",
+               align = "hv",
+               axis = "l",
                ncol = 1)
 
 ## EXPORT ######################################################################
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p,
-                    filename = "fig06_biophysical_vs_effect",
+                    filename = "fig05_biophysical_vs_effect",
                     width = 20,
                     height = 9)

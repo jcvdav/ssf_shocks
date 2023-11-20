@@ -79,8 +79,7 @@ combined <- plot_grid(total_landings_ts +
                          theme(legend.position = "None"),
                        landings_ts,
                ncol = 2,
-               labels = "auto",
-               label_x = 0.85)
+               labels = "auto")
 
 scale <- 0.075
 halign <- 0.45
@@ -104,7 +103,7 @@ p <- ggdraw() +
 ## EXPORT ######################################################################
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(p,
-                    filename = "fig04_fishery_ts",
+                    filename = "fig03_fishery_ts",
                     width = 18,
                     height = 10)
 

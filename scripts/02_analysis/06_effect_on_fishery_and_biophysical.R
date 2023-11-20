@@ -28,7 +28,7 @@ centroids <- st_read(here("data", "processed", "centroids.gpkg")) %>%
   bind_cols(st_coordinates(.)) %>% 
   st_drop_geometry() %>% 
   rename(lon = X, lat = Y) %>% 
-  mutate(lat_dist = ((lat - 25) * 111.1) / 1e3)
+  mutate(lat_dist = ((lat - 25) * 111.1) / 1e2)
 
 hist_landings <- readRDS(here("data", "processed", "mean_historical_eu_landings.rds"))
 
@@ -55,14 +55,13 @@ coef_data <- models %>%
   left_join(centroids, by = c("fishery", "eu_rnpa")) %>% 
   left_join(hist_mean_t, by = c("fishery", "eu_rnpa")) %>% 
   left_join(hist_landings, by = c("fishery", "eu_rnpa")) %>% 
-  left_join(slopes, by = c("fishery", "eu_rnpa")) %>% 
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
   mutate(img = here("data", "img", paste0(fishery, ".png")),
          p_fill = 1* (p.value <= 0.05) * estimate,
          eu_name = fct_reorder(eu_name, estimate))
 
 # Fit models -------------------------------------------------------------------
-three_models <- feols(estimate ~ sw(lat_dist, temp_cv, live_weight_cv, slope) | fishery,
+three_models <- feols(estimate ~ sw(lat_dist, temp_cv, live_weight_cv) | fishery,
       weights = ~live_weight,
       data = coef_data,
       vcov = vcov_conley(lat = ~lat,
@@ -83,7 +82,8 @@ modelsummary(three_models,
                              live_weight_cv = "Slope"),
              gof_omit = c("IC|RMSE|R2"),
              title = "Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.",
-             notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer.")
+             notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer.
+             The coefficients are estimated using weigthed OLS regression, with weights proportional to mean historical fisheries production.")
 
 ## EXPORT ######################################################################
 

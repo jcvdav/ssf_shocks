@@ -170,24 +170,22 @@ delta_p <- ggplot(change_in_p,
 p1 <- plot_grid(p_at_least_one,
                 p_as_big,
                 ncol = 1,
-                align = "vh",
-                labels = c("a", "c"),
-                label_x = 0.9)
+                align = "hv",
+                labels = c("a", "c"))
 
 p2 <- plot_grid(p1,
           delta_p,
           ncol = 2,
           axis = "t",
-          align = "vh",
+          align = "hv",
           rel_widths = c(1, 1.5),
-          labels = c("", "b"),
-          label_x = 0.9)
+          labels = c("", "b"))
 
-## EXPORT ######################################################################
+
 
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p2,
-                    filename = "fig03_future_mhw_plot",
+                    filename = "fig06_future_mhw_plot",
                     width = 18,
                     height = 15)
 
