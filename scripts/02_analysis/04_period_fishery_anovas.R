@@ -34,6 +34,16 @@ total_data <- data %>%
   group_by(period, period_long, fishery) %>% 
   mutate(period_mean = mean(norm_live_weight),
          period_sd = sd(norm_live_weight)) %>% 
+  ungroup()
+
+# Get pct change by period
+total_data %>%
+  ungroup() %>%
+  select(fishery, period, period_mean) %>%
+  distinct() %>%
+  pivot_wider(names_from = period, values_from = period_mean, names_prefix = "p") %>%
+  mutate(pct1 = ((p1 - p0) / p0) * 100,
+         pct2 = ((p2 - p0) / p0) * 100)
 
 # X ----------------------------------------------------------------------------
 lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
@@ -54,3 +64,4 @@ TukeyHSD(aov(urc_mod))
 # X ----------------------------------------------------------------------------
 saveRDS(object = total_data,
         file = here("data", "output", "total_annual_normalized_landigs.rds"))
+
