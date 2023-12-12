@@ -61,19 +61,31 @@ total_landings_ts <- ggplot(data = total_data,
                 group = period_long,
                 color = period_long)) +
   geom_line(color = "gray10") +
-  geom_point(aes(fill = period_long),
+  geom_point(aes(fill = period_long,
+                 size = live_weight / 1e3),
              color = "gray10") +
   scale_fill_manual(values = period_palette) +
   scale_color_manual(values = period_palette) +
   scale_shape_manual(values = c(21, 22, 24)) +
-  facet_wrap(~fishery, ncol = 1, scales = "free_y") +
+  scale_y_continuous(expand = expansion(mult = 0.2, add = 0)) +
+  guides(fill = guide_legend(title = "Period",
+                             title.position = "top",
+                             title.hjust = 0.5,
+                             override.aes = list(alpha = 0.75,
+                                                 pch = "")),
+         size = guide_legend(title = "Total landings (tons)",
+                             title.position = "top",
+                             title.hjust = 0.5),
+         color = "none",
+         shape = "none") +
   labs(x = "Year",
-       y = "Landings\n(tons / active economic units)",
+       y = "Landings\n(tons / # active economic units)",
        fill = "Period") +
-  theme(legend.position = "None") +
+  facet_wrap(~fishery, ncol = 1, scales = "free_y") +
+  theme(legend.position = "bottom") +
   geom_text(data = pct_changes,
             mapping = aes(x = 2015.5,
-                          y = 1.1 * (p0 / 1e3),
+                          y = 1.2 * (p0 / 1e3),
                           label = scales::percent(pct1)), size = 3)
 
 # Landings by TURF (panel b) ---------------------------------------------------
@@ -98,22 +110,17 @@ landings_ts <- ggplot(data = data,
             color = "black") +
   scale_fill_manual(values = period_palette,
                     aesthetics = c("color", "fill")) +
-  guides(fill = guide_legend(title = "Period",
-                             title.position = "top",
-                             title.hjust = 0.5,
-                             override.aes = list(alpha = 0.5)),
-         color = "none") +
+  scale_x_continuous(expand = c(0, 0)) +
   labs(x = "Year",
        y = "Standardized\nlandings") +
-  scale_x_continuous(expand = c(0, 0)) +
   facet_wrap(~fishery, ncol = 1, scales = "free_y") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "None")
 
 
-legend <- get_legend(landings_ts)
+legend <- get_legend(total_landings_ts)
 
-combined <- plot_grid(total_landings_ts,
-                       landings_ts + theme(legend.position = "None"),
+combined <- plot_grid(total_landings_ts  + theme(legend.position = "None"),
+                       landings_ts,
                ncol = 2,
                align = "hv",
                labels = "auto")

@@ -28,12 +28,14 @@ data <- readRDS(file = here("data", "estimation_panels", "env_fish_panel.rds")) 
 # X ----------------------------------------------------------------------------
 total_data <- data %>%
   group_by(period, period_long, year, fishery) %>%
-  summarize(live_weight = sum(live_weight, na.rm = T),
+  summarize(live_weight = sum(live_weight, na.rm = T), #) %>% 
             n = n_distinct(eu_rnpa),
-            norm_live_weight = live_weight / n) %>%
+            norm_live_weight = live_weight / 1) %>%
   group_by(period, period_long, fishery) %>% 
+  # mutate(period_mean = mean(live_weight),
+         # period_sd = sd(live_weight)) %>%
   mutate(period_mean = mean(norm_live_weight),
-         period_sd = sd(norm_live_weight)) %>% 
+         period_sd = sd(norm_live_weight)) %>%
   ungroup()
 
 # Get pct change by period
@@ -48,7 +50,7 @@ total_data %>%
 # X ----------------------------------------------------------------------------
 lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
 Anova(mod = lob_mod, type = "II", white.adjust = TRUE)
-
+TukeyHSD(aov(cuc_mod))
 # X ----------------------------------------------------------------------------
 cuc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
 Anova(mod = cuc_mod, type = "II", white.adjust = TRUE)
