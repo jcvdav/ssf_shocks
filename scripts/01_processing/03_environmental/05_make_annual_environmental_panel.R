@@ -30,6 +30,10 @@ std_normal <- function(x, year, cutoff_year = 2013) {
 cv <- function(x, year, cutoff_year = 2013){
   sd(x[year <= cutoff_year], na.rm = T) / mean(x[year <= cutoff_year], na.rm = T)
 }
+
+warming_rate <- function(temp, year) {
+  as.numeric(coef(lm(temp ~ year))[2])
+}
 ## PROCESSING ##################################################################
 
 # X ----------------------------------------------------------------------------
@@ -50,7 +54,9 @@ annual_sst_panel <-
   mutate(temp_mean_lag = lag(temp_mean),
          temp_long_term = mean(temp_mean),
          temp_cv = cv(temp_mean, year),
-         norm_temp_mean = std_normal(temp_mean, year)) %>% 
+         norm_temp_mean = std_normal(temp_mean, year),
+         warming_rate_mean = warming_rate(temp_mean, year),
+         warming_rate_max = warming_rate(temp_max, year)) %>% 
   ungroup()
 
 # X ----------------------------------------------------------------------------
@@ -73,8 +79,7 @@ annual_mhw_panel <-
          norm_mhw_days = std_normal(mhw_days, year),
          norm_mhw_int_cumulative = std_normal(mhw_int_cumulative, year),
          norm_mhw_int_cumulative_lag = std_normal(mhw_int_cumulative_lag, year),
-         norm_mhw_int_cumulative_lag3 = std_normal(mhw_int_cumulative_lag3, year),
-         norm_net_mhw = std_normal(net_mhw, year)) %>% 
+         norm_mhw_int_cumulative_lag3 = std_normal(mhw_int_cumulative_lag3, year)) %>% 
   ungroup()
 
 # X ----------------------------------------------------------------------------
@@ -88,7 +93,8 @@ annual_env_panel <-
          year,
          contains("period"),
          contains("temp"),
-         contains("mhw"))
+         contains("mhw"),
+         contains("rate"))
 
 ## EXPORT ######################################################################
 

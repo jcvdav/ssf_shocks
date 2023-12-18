@@ -40,7 +40,7 @@ hist_mean_t <- models %>%
   filter(indep == "norm_mhw_int_cumulative") %>% 
   select(fishery, data) %>% 
   unnest(data) %>% 
-  select(fishery, eu_rnpa, temp_long_term, temp_cv, live_weight_cv) %>% 
+  select(fishery, eu_rnpa, temp_long_term, temp_cv, live_weight_cv, warming_rate_mean, warming_rate_max) %>% 
   distinct()
 
 coef_data <- models %>%
@@ -58,7 +58,11 @@ coef_data <- models %>%
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
   mutate(img = here("data", "img", paste0(fishery, ".png")),
          p_fill = 1* (p.value <= 0.05) * estimate,
-         eu_name = fct_reorder(eu_name, estimate))
+         eu_name = fct_reorder(eu_name, estimate)) %>% 
+  # Re-scale regressors to be between 0 and 1 for ease of interpretation
+  mutate(lat_dist = scales::rescale(lat_dist, to = c(0, 1)),
+         temp_cv = scales::rescale(temp_cv, to = c(0, 1)),
+         live_weight_cv = scales::rescale(live_weight_cv, to = c(0, 1)))
 
 # Fit models -------------------------------------------------------------------
 three_models <- feols(estimate ~ sw(lat_dist, temp_cv, live_weight_cv) | fishery,
@@ -83,7 +87,7 @@ modelsummary(three_models,
              gof_omit = c("IC|RMSE|R2"),
              title = "Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.",
              notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer.
-             The coefficients are estimated using weigthed OLS regression, with weights proportional to mean historical fisheries production.")
+             Regressors were resacles to 0-1 range to help interpretation of coefficients and comparision between drivers.")
 
 ## EXPORT ######################################################################
 
