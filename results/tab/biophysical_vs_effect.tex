@@ -1,0 +1,22 @@
+\begin{table}
+
+\caption{\label{tab:biophysical_vs_effect}Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.}
+\centering
+\begin{threeparttable}
+\begin{tabular}[t]{lccc}
+\toprule
+  & Biogeographic & Climate refiguia & Adaptation\\
+\midrule
+Slope & \num{0.269}* & \num{-0.489}*** & \num{0.640}***\\
+ & (\num{0.146}) & (\num{0.135}) & (\num{0.124})\\
+\midrule
+Num.Obs. & \num{55} & \num{55} & \num{55}\\
+Std.Errors & Conley (100km) & Conley (100km) & Conley (100km)\\
+FE: fishery & X & X & X\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer. Regressors were resacled to 0-1 range to help comparision of coefficients between drivers.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}

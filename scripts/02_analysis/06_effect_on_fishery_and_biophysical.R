@@ -66,7 +66,6 @@ coef_data <- models %>%
 
 # Fit models -------------------------------------------------------------------
 three_models <- feols(estimate ~ sw(lat_dist, temp_cv, live_weight_cv) | fishery,
-      weights = ~live_weight,
       data = coef_data,
       vcov = vcov_conley(lat = ~lat,
                          lon = ~lon,
@@ -85,9 +84,11 @@ modelsummary(three_models,
                              temp_cv = "Slope",
                              live_weight_cv = "Slope"),
              gof_omit = c("IC|RMSE|R2"),
-             title = "Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.",
-             notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer.
-             Regressors were resacles to 0-1 range to help interpretation of coefficients and comparision between drivers.")
+             output = here("results", "tab", "biophysical_vs_effect.tex"),
+             title = "\\label{tab:biophysical_vs_effect}Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.",
+             notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer. Regressors were resacled to 0-1 range to help comparision of coefficients between drivers.",
+             threeparttable = T,
+             escape = F)
 
 ## EXPORT ######################################################################
 
