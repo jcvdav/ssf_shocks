@@ -80,6 +80,9 @@ results %>%
   select(institution_id, source_id, nominal_resolution) %>%
   distinct() %>%
   arrange(source_id) %>% 
-  knitr::kable(col.names = c("Institution id", "Source id", "Nominal resolution")) %>% 
-  kableExtra::kable_styling() %>% 
-  kableExtra::save_kable(file = "cmip_tos_model_info.png")
+  knitr::kable(col.names = c("Institution id", "Source id", "Nominal resolution"),
+               booktabs = T,
+               caption = "Information on the climate model output data used in our analysis.",
+               label = "climate_model_info",
+               format = "latex") %>% 
+  cat(file = here("results", "tab", "tabS02_CMIP6_info.tex"))

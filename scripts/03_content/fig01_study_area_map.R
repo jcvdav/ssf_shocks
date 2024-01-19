@@ -96,8 +96,8 @@ ref <- ggplot() +
   scale_y_continuous(expand = c(0, 0)) 
 
 
-map <- ggdraw() +
-  draw_plot(main) +
+map <- ggdraw(main) +
+  cowplot::draw_label(label = "a)", x = 0.05, y = 0.95) +
   cowplot::draw_plot(
     ref,
     hjust = 1,
