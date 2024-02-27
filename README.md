@@ -1,4 +1,4 @@
-# Repository for `Impacts of marine heatwves on small-scale fisheries`
+# Repository for `Impacts of marine heatwaves on small-scale fisheries`
 
 ## Replication info
 This repository is equipped with an renv lockfile recording all versions of R packages used in the analysis. If you wish to replicate our environment, use renv::restore() prior to running any portion of the code. A Makefile is still being constructed.
