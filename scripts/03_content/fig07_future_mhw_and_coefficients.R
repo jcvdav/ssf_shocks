@@ -26,22 +26,24 @@ pacman::p_load(
 coef_data <- readRDS(file = here("data", "output", "effect_on_fishery_and_biophysical.rds"))
 con_p_mhw_threshold_future <- readRDS(file = here("data", "output", "con_p_mhw_threshold_future.rds"))
 turfs <- sf::st_read(dsn = here("data","processed","turf_polygons.gpkg")) %>% 
-  ms_simplify(keep_shapes = T) %>% 
-  st_centroi
+  st_centroid() %>% 
+  st_transform("EPSG:6362")
 
 corners <- st_bbox(turfs)
 
 mex <- ne_countries(country = c("Mexico", "United States of America"),
                     returnclass = "sf",
                     scale = "large") %>% 
-  select(sov_a3)
+  select(sov_a3) %>% 
+  st_transform("EPSG:6362")
 
 mex_low_res <- ne_countries(country = c("Mexico"),
                             returnclass = "sf",
-                            scale = "small")
+                            scale = "small") %>% 
+  st_transform("EPSG:6362")
 
 mex_crop <- st_crop(x = mex,
-                    y = st_buffer(turfs, dist = 5e4))
+                    y = st_buffer(turfs, dist = 52e3))
 
 ## PROCESSING ##################################################################
 
@@ -106,25 +108,25 @@ p3 <- ggplot() +
     color = "black") +
   scale_fill_manual(values = ssp_palette) +
   scale_shape_manual(values = c(21, 22, 24)) +
-  scale_x_continuous(expand = c(0, 0)) +
-  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0), breaks = seq(-117, -111, by = 2)) +
+  scale_y_continuous(expand = c(0, 0), breaks = seq(24, 32, by = 2)) +
   guides(fill = guide_legend(title = "SSP",
-                             override.aes = list(shape = 21)),
-         shape = guide_legend(title = "Fishery"),
+                             override.aes = list(shape = 21,
+                                                 size = 4)),
+         shape = guide_legend(title = "Fishery",
+                              override.aes = list(size = 4)),
          alpha = "none") +
   facet_grid(~ssp)
 
 p <- plot_grid(p1, p2,
                ncol = 2,
-               rel_widths = c(3, 1),
-               labels = "auto",
-               label_x = 0.85)
+               rel_widths = c(2.75, 1),
+               labels = "auto")
 
 pp <- plot_grid(p, p3,
                 ncol = 1,
                 rel_heights = c(2, 1.25),
-                labels = c("", "c"),
-                label_x = 0.8)
+                labels = c("", "c"))
 
 ## EXPORT ######################################################################
 
@@ -135,3 +137,4 @@ startR::lazy_ggsave(
   width = 18,
   height = 20
 )
+

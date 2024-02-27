@@ -69,5 +69,5 @@ p <- ggplot(data = data,
 # X ----------------------------------------------------------------------------
 startR::lazy_ggsave(plot = p,
                     filename = "figS04_regime_change_test_plot.R",
-                    width = 15,
-                    height = 5)
+                    width = 18,
+                    height = 6)

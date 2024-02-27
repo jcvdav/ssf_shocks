@@ -46,3 +46,4 @@ annual_env_fish_panel <- fish_panel %>%
 # Export the panel  ------------------------------------------------------------
 saveRDS(object = annual_env_fish_panel,
         file = here("data", "estimation_panels", "env_fish_panel.rds"))
+

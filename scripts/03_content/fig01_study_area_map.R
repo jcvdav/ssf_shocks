@@ -23,13 +23,19 @@ pacman::p_load(
 )
 
 # Load data --------------------------------------------------------------------
+mhw <- readRDS(file = here("data", "processed", "annual_environmental_panel.rds")) %>% 
+  group_by(eu_rnpa, fishery) %>% 
+  summarize(mhw = max(mhw_int_cumulative))
+
 turfs <-
   sf::st_read(dsn = here(
     "data",
     "processed",
     "turf_polygons.gpkg"
   )) %>% 
-  ms_simplify(keep_shapes = T)
+  ms_simplify(keep_shapes = T) %>% 
+  st_transform("EPSG:6362") %>% 
+  left_join(mhw, by = c("eu_rnpa", "fishery"))
 
 corners <- st_bbox(turfs)
 
@@ -37,11 +43,13 @@ mex <-
   ne_countries(country = c("Mexico", "United States of America"),
                returnclass = "sf",
                scale = "large") %>% 
-  select(sov_a3)
+  select(sov_a3) %>% 
+  st_transform("EPSG:6362")
 
 mex_low_res <- ne_countries(country = c("Mexico"),
                             returnclass = "sf",
-                            scale = "small")
+                            scale = "small") %>% 
+  st_transform("EPSG:6362")
 
 mex_crop <- st_crop(x = mex,
                     y = st_buffer(turfs, dist = 1e5))
@@ -49,14 +57,26 @@ mex_crop <- st_crop(x = mex,
 main <- ggplot() +
   geom_sf(
     data = turfs,
-    color = "black",
-    fill = "steelblue",
-    alpha = 0.5
+    aes(fill = mhw),
+    color = "black"
   ) +
-  geom_sf(data = mex_crop,
-          color = "black") +
+  geom_sf(
+    data = mex_crop,
+    fill = "gray",
+    color = "black") +
+  guides(
+    fill = guide_colorbar(
+      title = "Cumulative Intensity (°C days)",
+      title.position = "top", barwidth = 10,
+      frame.colour = "black",
+      ticks.colour = "black")) +
+  scale_fill_gradientn(colours = rev(ipcc_temp)) +
   scale_x_continuous(expand = c(0, 0)) +
-  scale_y_continuous(expand = c(0, 0)) 
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid.major = element_blank(),
+        legend.position = c(0, 0),
+        legend.justification = c(0, 0),
+        legend.direction = "horizontal")
 
 ref <- ggplot() +
   geom_sf(data = mex_low_res,
@@ -76,14 +96,14 @@ ref <- ggplot() +
   scale_y_continuous(expand = c(0, 0)) 
 
 
-map <- ggdraw() +
-  draw_plot(main) +
+map <- ggdraw(main) +
+  cowplot::draw_label(label = "a)", x = 0.05, y = 0.95) +
   cowplot::draw_plot(
     ref,
-    hjust = 0,
-    vjust = 0,
-    x = 0.15,
-    y = -0.025,
+    hjust = 1,
+    vjust = 1,
+    x = 0.95,
+    y = 1.08,
     width = 0.4,
     height = 0.4
   )
@@ -92,7 +112,7 @@ map <- ggdraw() +
 startR::lazy_ggsave(
   plot = map,
   filename = "fig01_study_area_map",
-  width = 8,
-  height = 10
+  width = 9,
+  height = 14
 )
 

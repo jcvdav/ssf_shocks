@@ -64,12 +64,14 @@ mhw_ts_long <- ggplot(data = mhw_data$mhw[[1]]$event,
             label = "'97-'98 El Niño",
             color = "gray10",
             inherit.aes = F) +
-  scale_fill_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
-                                                          type = "continuous")) +
-  scale_color_gradientn(colours = wesanderson::wes_palette(name = "Zissou1",
-                                                           type = "continuous")) +
+  scale_fill_gradientn(colors = rev(ipcc_temp),
+                       aesthetics = c("color", "fill")) +
   guides(fill = guide_colorbar(frame.colour = "black",
-                               ticks.colour = "black", barwidth = 0.5)) +
+                               ticks.colour = "black",
+                               barwidth = 0.5),
+         color = guide_colorbar(frame.colour = "black",
+                               ticks.colour = "black",
+                               barwidth = 0.5)) +
   labs(x = "Year",
        y = expression(paste("Cumulative intensity (", degree, "C days)")),
        fill = expression(paste("Maximum intensity (", degree, "C)")),
@@ -153,5 +155,5 @@ p <- plot_grid(mhw_ts_long,
 ## EXPORT ######################################################################
 startR::lazy_ggsave(plot = p,
                     filename = "fig08_env_ecol",
-                    width = 15,
-                    height = 20)
+                    width = 18,
+                    height = 22)
