@@ -85,8 +85,8 @@ hovmoller <- mhw %>%
   guides(fill = guide_colorbar(title = "Cumulative Intensity (°C days)",
                                frame.colour = "black",
                                ticks.colour = "black")) +
-  labs(x = "|___________________________ Before _________________________| During |____ After _|",
-       y = NULL)+
+  labs(x = "|___________________________ Before ___________________________| During |__ After _|",
+       y = "South _______________________________________________________ North     ")+
   theme(legend.position = "bottom",
         legend.box.spacing = unit(0.1, "mm"),
         axis.title.x = element_text(hjust = 1)) +
@@ -117,10 +117,12 @@ period_boxplot <- mhw %>%
   guides(fill = guide_colorbar(title = "Cumulative Intensity (°C days)",
                                frame.colour = "black",
                                ticks.colour = "black")) +
-  scale_fill_gradientn(colours = rev(ipcc_temp), limits = c(0, 500)) +
+  scale_fill_gradientn(colours = rev(ipcc_temp),
+                       limits = c(0, 500)) +
   labs(y = "Cumulative Intensity (°C days)",
        x = "") +
-  theme(legend.position = c(0, 1),
+  theme(legend.position = "inside",
+        legend.position.inside = c(0, 1),
         legend.justification = c(0, 1))
 
 # Build boxplots ---------------------------------------------------------------
@@ -162,7 +164,7 @@ p1 <- plot_grid(
   period_boxplot,
   ncol = 1,
   labels = c("a", "b"),
-  rel_heights = c(2, 1.1),
+  rel_heights = c(2, 1.2),
   align = "hv", axis = "x"
 )
 

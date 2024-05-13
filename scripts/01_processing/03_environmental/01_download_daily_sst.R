@@ -7,7 +7,6 @@
 # Description
 #
 # Download NOAA AVHRR Optimum Interpolation v2.1 - SST
-# Gap-Filled,  0.05° /5km  •  1981-Now
 # NOAA/National Centers for Environmental Information (NCEI) 1/4 Degree Daily
 # Optimum Interpolation Sea Surface Temperature (OISST) Analysis,
 # Version 2.1 - Inter. NOAAs 1/4-degree Daily Optimum Interpolation Sea Surface

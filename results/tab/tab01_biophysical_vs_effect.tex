@@ -1,22 +1,26 @@
 \begin{table}
-
 \caption{\label{tab:biophysical_vs_effect}Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.}
 \centering
-\begin{threeparttable}
-\begin{tabular}[t]{lccc}
+\begin{talltblr}[         %% tabularray outer open
+entry=none,label=none,
+note{}={* p < 0.1, ** p < 0.05, *** p < 0.01},
+note{}={All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer. Regressors were rescaled to 0-1 range to help comparision of coefficients between drivers.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+column{1}={halign=l,},
+column{2}={halign=c,},
+column{3}={halign=c,},
+column{4}={halign=c,},
+hline{4}={1,2,3,4}{solid, 0.05em, black},
+}                     %% tabularray inner close
 \toprule
-  & Biogeographic & Climate refugia & Adaptation\\
-\midrule
-Slope & \num{0.269}* & \num{-0.489}*** & \num{0.640}***\\
- & (\num{0.146}) & (\num{0.135}) & (\num{0.124})\\
-\midrule
-Num.Obs. & \num{55} & \num{55} & \num{55}\\
-Std.Errors & Conley (100km) & Conley (100km) & Conley (100km)\\
-FE: fishery & X & X & X\\
+& Biogeographic & Climate refugia & Adaptation \\ \midrule %% TinyTableHeader
+Slope       & \num{0.400}   & \num{-0.702}*** & \num{0.752}*** \\
+& (\num{0.339}) & (\num{0.181})   & (\num{0.168})  \\
+Num.Obs.    & \num{55}      & \num{55}        & \num{55}       \\
+Std.Errors  & Conley (100km) & Conley (100km)   & Conley (100km)  \\
+FE: fishery & X              & X                & X               \\
 \bottomrule
-\end{tabular}
-\begin{tablenotes}
-\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer. Regressors were resacled to 0-1 range to help comparision of coefficients between drivers.
-\end{tablenotes}
-\end{threeparttable}
+\end{talltblr}
 \end{table}

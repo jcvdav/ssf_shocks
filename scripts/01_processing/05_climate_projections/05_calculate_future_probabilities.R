@@ -46,7 +46,7 @@ data <- future_mhw %>%
 p_mhw_occurs_future <- data %>%
   filter(year >= 2022) %>% 
   group_by(model, ssp, eu_rnpa, fishery, year) %>%
-  summarize(mhw = any(event)) %>%
+  summarize(mhw = 1 * any(event)) %>%
   ungroup() %>%
   group_by(model, ssp, eu_rnpa, fishery) %>%
   summarize(p_at_least_one = mean(mhw)) %>%
