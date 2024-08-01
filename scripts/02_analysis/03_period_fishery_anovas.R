@@ -30,10 +30,8 @@ total_data <- data %>%
   group_by(period, period_long, year, fishery) %>%
   summarize(live_weight = sum(live_weight, na.rm = T), #) %>% 
             n = n_distinct(eu_rnpa),
-            norm_live_weight = live_weight / 1) %>%
+            norm_live_weight = live_weight / n) %>%
   group_by(period, period_long, fishery) %>% 
-  # mutate(period_mean = mean(live_weight),
-         # period_sd = sd(live_weight)) %>%
   mutate(period_mean = mean(norm_live_weight),
          period_sd = sd(norm_live_weight)) %>%
   ungroup()
@@ -47,10 +45,18 @@ total_data %>%
   mutate(pct1 = ((p1 - p0) / p0) * 100,
          pct2 = ((p2 - p0) / p0) * 100)
 
+total_data %>%
+  ungroup() %>%
+  select(fishery, period, period_sd) %>%
+  distinct() %>%
+  pivot_wider(names_from = period, values_from = period_sd, names_prefix = "p") %>%
+  mutate(pct1 = ((p1 - p0) / p0) * 100,
+         pct2 = ((p2 - p0) / p0) * 100)
+
 # X ----------------------------------------------------------------------------
 lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
 Anova(mod = lob_mod, type = "II", white.adjust = TRUE)
-TukeyHSD(aov(cuc_mod))
+TukeyHSD(aov(lob_mod))
 # X ----------------------------------------------------------------------------
 cuc_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Sea cucumber"))
 Anova(mod = cuc_mod, type = "II", white.adjust = TRUE)

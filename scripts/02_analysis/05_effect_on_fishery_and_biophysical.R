@@ -49,7 +49,6 @@ coef_data <- models %>%
   mutate(coefs = map(fe_model, broom::tidy)) %>% 
   select(fishery, coefs) %>% 
   unnest(coefs) %>% 
-  # group_by(fishery) %>% # This group by was included in the original submission, and it should not have been there at all
   filter(str_detect(term, "norm_mhw_int_cumulative")) %>% 
   mutate(eu_rnpa = str_extract(term, "[:digit:]+")) %>% 
   select(-term) %>% 
@@ -85,10 +84,15 @@ modelsummary(three_models,
              coef_rename = c(lat_dist = "Slope",
                              temp_cv = "Slope",
                              live_weight_cv = "Slope"),
-             gof_omit = c("IC|RMSE|R2"),
+             coef_omit = "turf",
+             gof_omit = c("IC|RMSE|N|With|FE|Std|Adj"),
              output = here("results", "tab", "tab01_biophysical_vs_effect.tex"),
-             title = "\\label{tab:biophysical_vs_effect}Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypothesis.",
-             notes = "All models include fixed-effects by fishery and use spatial standard errors with a 100 km buffer. Regressors were rescaled to 0-1 range to help comparison of coefficients between drivers.",
+             title = "\\label{tab:biophysical_vs_effect}\\textbf{Regression coefficients testing for the biogeographic, climate refugia, and adaptation hypotheses.}
+             The slope represents the coefficient of interest on the variable relevant to each hypothesis. First column shows slope on distance from 25°N.
+             Second column is slope on the coefficient of variation of historical (1982-2013) SST.
+             The third column is the slope on variation of historical fiheries production (2000-2013).",
+             notes = c("All regressors were rescaled to 0-1 range to help comparison of coefficients across models.
+             All models have 55 observations, include fixed-effects by fishery, TURF area as a covariate, and use Conley standard errors with a 100 km radius."),
              threeparttable = T,
              escape = F)
 
