@@ -73,37 +73,37 @@ scatter_plot <- function(data, variable, lab, img = F) {
 
 # X ----------------------------------------------------------------------------
 # Need to fiddle with eh coordinates for the images
-lat <- scatter_plot(coef_data, lat_dist, "Distance from distribution limit\n(25°N parallel, 100 Km)")
+lat <- scatter_plot(coef_data, lat_dist, "Distance from 25°N ('00 Km)")
 leg <- get_legend(lat)
 lat <- lat + 
   theme(legend.position = "None") +
   annotate(geom = "text",
-           x = 1.5, y = -1,
+           x = 1.5, y = -1.1,
            label = "Southern TURFs",
            size = 2) +
   annotate(geom = "text",
-           x = 7, y = -1,
+           x = 7, y = -1.1,
            label = "Northern TURFs",
            size = 2)
-temp_cv <- scatter_plot(coef_data, temp_cv, "Variation in SST (CV_i)") +
+temp_cv <- scatter_plot(coef_data, temp_cv, expression("Variation in SST"~(CV[i]))) +
   theme(legend.position = "None") +
   annotate(geom = "text",
-           x = 0.03, y = -1,
-           label = "Stable SST",
+           x = 0.03, y = -1.1,
+           label = "Less variable SST",
            size = 2) +
   annotate(geom = "text",
-           x = 0.042, y = -1,
-           label = "Variable SST",
+           x = 0.042, y = -1.1,
+           label = "More variable SST",
            size = 2)
-land_cv <- scatter_plot(coef_data, live_weight_cv, "Variation in landings (CV_i)") +
+land_cv <- scatter_plot(coef_data, live_weight_cv, expression("Variation in landings"~(CV[i]))) +
   theme(legend.position = "None") +
   annotate(geom = "text",
-           x = 0.3, y = -1,
-           label = "Stable landings",
+           x = 0.4, y = -1.1,
+           label = "Less variable landings",
            size = 2) +
   annotate(geom = "text",
-           x = 1.1, y = -1,
-           label = "Variable landings",
+           x = 1, y = -1.1,
+           label = "More variable landings",
            size = 2)
 
 plots <- plot_grid(lat,
@@ -126,3 +126,4 @@ startR::lazy_ggsave(plot = p,
                     filename = "fig05_biophysical_vs_effect",
                     width = 20,
                     height = 9)
+
