@@ -67,11 +67,13 @@ main <- ggplot() +
   guides(
     fill = guide_colorbar(
       title = "Cumulative Intensity (°C days)",
-      title.position = "top", barwidth = 10,
+      title.position = "top",
+      barwidth = 10,
       frame.colour = "black",
       ticks.colour = "black")) +
   scale_fill_gradientn(colours = rev(ipcc_temp)) +
-  scale_x_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0),
+                     breaks = -117:-112) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(),
         legend.position = c(0, 0),
@@ -97,7 +99,6 @@ ref <- ggplot() +
 
 
 map <- ggdraw(main) +
-  cowplot::draw_label(label = "a)", x = 0.05, y = 0.95) +
   cowplot::draw_plot(
     ref,
     hjust = 1,
