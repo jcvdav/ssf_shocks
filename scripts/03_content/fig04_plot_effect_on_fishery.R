@@ -31,6 +31,7 @@ count_effects <- function(model) {
     mutate(neg = estimate < 0, sig = p.value < 0.05) %>%
     count(neg, sig)
 }
+
 coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumulative:befTRUE"){
   
   # Get the title --------------------------------------------------------------
@@ -57,7 +58,9 @@ coefplot <- function(fishery, data, indep, model, pattern = "norm_mhw_int_cumula
   
   plot_data <- plot_data %>% 
     filter(str_detect(term, pattern)) %>%
-    mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
+    mutate(term = str_extract(term, "[:digit:]{10}"),
+           term = str_replace_all(term, "0", "*"),
+           term = str_replace_all(term, "8", "°")) %>% 
     mutate(term = fct_reorder(term, -estimate),
            p_fill = p.value < 0.05,
            fill2 = (1 * p_fill) * estimate)

@@ -54,7 +54,9 @@ hovmoller <- mhw %>%
                                                na.rm = T),
             lat = min(lat),
             .groups = "drop") %>% 
-  mutate(eu_rnpa = fct_reorder(eu_rnpa, lat)) %>% 
+  mutate(eu_rnpa = str_replace_all(eu_rnpa, "0", "*"),
+         eu_rnpa = str_replace_all(eu_rnpa, "8", "°"),
+         eu_rnpa = fct_reorder(eu_rnpa, lat)) %>% 
   ggplot() +
   geom_tile(aes(x = year, y = eu_rnpa, fill = mhw_int_cumulative)) +
   geom_text(x = 1985,

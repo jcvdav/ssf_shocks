@@ -30,7 +30,9 @@ eu_level_effects <- models %>%
   arrange(indep) %>% 
   mutate(coefs = map(fe_model, tidy)) %>% select(fishery, coefs) %>% unnest(coefs) %>%
   filter(str_detect(term, "norm_mhw_int_cumulative")) %>%
-  mutate(term = str_extract(term, "[:digit:]{10}")) %>% 
+  mutate(term = str_extract(term, "[:digit:]{10}"),
+         term = str_replace_all(term, "0", "*"),
+         term = str_replace_all(term, "8", "°")) %>% 
   group_by(term) %>% 
   mutate(n = n()) %>% 
   ungroup() %>% 

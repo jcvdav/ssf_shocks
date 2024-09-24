@@ -28,6 +28,8 @@ references <- readRDS(file = here("data", "output", "reference_mhw_by_TURF.rds")
 references %>%
   mutate(max = as.character(round(max, 2))) %>% 
   pivot_wider(names_from = fishery, values_from = max, values_fill = "-") %>%
+  mutate(eu_rnpa = str_replace_all(eu_rnpa, "0", "*"),
+         eu_rnpa = str_replace_all(eu_rnpa, "8", "°")) %>% 
   kable(col.names = c("RNPA of Economic Unit",
                       "Year",
                       "Lobster",
