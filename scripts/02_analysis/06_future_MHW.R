@@ -26,6 +26,12 @@ p_mhw_occurs_past <- readRDS(file = here("data", "output", "p_mhw_occurs.rds")) 
 p_mhw_occurs_future <- readRDS(file = here("data", "output", "p_mhw_occurs_future.rds"))
 
 ## PROCESSING ##################################################################
+# Some stats for text ----------------------------------------------------------
+# Range of future P(MHW)
+p_mhw_occurs %>%
+  group_by(ssp) %>%
+  summarize(p = mean(p_at_least_one),
+            sd = sd(p_at_least_one))
 
 # X ----------------------------------------------------------------------------
 p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
@@ -34,7 +40,8 @@ p_mhw_occurs <- bind_rows(p_mhw_occurs_past,
 model <- lm(p_at_least_one ~ fishery + ssp, data = p_mhw_occurs)
 
 car::Anova(model, type = "II", white.adjust = TRUE) %>% 
-  stargazer::stargazer(label = "tab:future_mhw_anova", 
+  stargazer::stargazer(summary = F,
+                       label = "tab:future_mhw_anova", 
                        title = "ANOVA results testing for differences in future probability of exposure relative to historical probabilities",
                        out = here("results", "tab", "tabS03_future_MHW_anova.tex"))
 

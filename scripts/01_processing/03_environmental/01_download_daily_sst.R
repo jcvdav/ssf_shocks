@@ -16,7 +16,7 @@
 # from different sources, resulting in a smoothed complete field.
 # Data can be manually queried here:
 # https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180.html
-# Note that thata are missing for 2021-03-23 and 2021-09-07
+# Note that data are missing for 2021-03-23 and 2021-09-07
 ################################################################################
 
 ## SET UP ######################################################################

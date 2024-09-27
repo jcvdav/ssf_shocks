@@ -56,6 +56,11 @@ plot_data <- con_p_mhw_threshold_future %>%
                          ssp == "ssp245" ~ "SSP2-4.5",
                          ssp == "ssp585" ~ "SSP5-8.5"))
 
+# Numbers for text:
+plot_data %>%
+  group_by(ssp, fishery) %>%
+  summarize(pct = sum(neg_neg) / length(neg_neg))
+
 mhw_turfs <- turfs %>% 
   mutate(fishery = str_to_sentence(str_replace(fishery, "_", " "))) %>% 
   left_join(plot_data, by = c("fishery", "eu_rnpa"))
