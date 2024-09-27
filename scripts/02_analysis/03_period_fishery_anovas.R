@@ -53,6 +53,9 @@ total_data %>%
   mutate(pct1 = ((p1 - p0) / p0) * 100,
          pct2 = ((p2 - p0) / p0) * 100)
 
+# DF's should be Df1 = (3 "periods" - 1) = 2
+# and DF2 = 22 years - 3 periods = 19
+
 # X ----------------------------------------------------------------------------
 lob_mod <- lm(norm_live_weight ~ period_long, data = total_data %>% filter(fishery == "Lobster"))
 Anova(mod = lob_mod, type = "II", white.adjust = TRUE)
