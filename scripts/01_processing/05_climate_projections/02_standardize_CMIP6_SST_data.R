@@ -288,7 +288,6 @@ future_walk(files, get_future_sst)
 plan(sequential)
 
 
-## NEED TO RE RUN TO GET HISTORICAL CMIP6.CMIP.BCC.BCC-CSM2-MR.historical.r1i1p1f1.Oday.tos.gn
 
 # DONE!
 tibble(files) %>%
