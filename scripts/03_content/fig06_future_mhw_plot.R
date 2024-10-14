@@ -171,15 +171,14 @@ p1 <- plot_grid(p_at_least_one,
                 p_as_big,
                 ncol = 1,
                 align = "hv",
-                labels = c("a", "c"))
+                labels = c("a", "c"), label_y = 1.1)
 
-p2 <- plot_grid(p1,
-          delta_p,
-          ncol = 2,
-          axis = "t",
-          align = "hv",
-          rel_widths = c(1, 1.5),
-          labels = c("", "b"))
+p2 <- plot_grid(p1, delta_p,
+                ncol = 2,
+                axis = "t",
+                align = "hv",
+                rel_widths = c(1, 1.5),
+                labels = c("", "b"))
 
 
 
